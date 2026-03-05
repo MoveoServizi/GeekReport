@@ -1,0 +1,489 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>{{ title }}</title>
+  <style>
+    :root{
+      --bg:#0b0f14;
+      --card:#0f1620;
+      --muted:#9fb0c0;
+      --text:#e8eef6;
+      --border:rgba(255,255,255,.10);
+      --accent:#7cc4ff;
+      --accent2:#62e6a5;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+    }
+    body{
+      margin:0;
+      min-height:100vh;
+      background:
+        radial-gradient(1200px 500px at 20% -10%, rgba(124,196,255,.18), transparent 60%),
+        radial-gradient(900px 500px at 110% 10%, rgba(98,230,165,.12), transparent 55%),
+        var(--bg);
+      color:var(--text);
+    }
+    .wrap{ width:min(900px, 94vw); margin:0 auto; padding:14px 14px 26px; }
+
+    .top{
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      gap:10px;
+      margin: 6px 0 14px;
+      text-align:center;
+    }
+    .logo{
+      width:min(320px, 72vw);
+      height:auto;
+      object-fit:contain;
+      display:block;
+      filter: drop-shadow(0 18px 28px rgba(0,0,0,.55));
+    }
+    h1{ margin:0; font-size:18px; letter-spacing:.2px; }
+    .hint{ margin:0; color:var(--muted); font-size:13px; }
+
+    .grid{
+      display:grid;
+      grid-template-columns: 1fr;
+      gap:12px;
+    }
+    @media (min-width: 860px){
+      .grid{ grid-template-columns: 1.05fr .95fr; align-items:start; }
+    }
+
+    .card{
+      background: linear-gradient(180deg, rgba(255,255,255,.03), transparent 55%), var(--card);
+      border:1px solid var(--border);
+      border-radius:18px;
+      padding:14px;
+      box-shadow: 0 14px 40px rgba(0,0,0,.45);
+    }
+
+    .controls{
+      display:grid;
+      gap:10px;
+      margin-bottom: 10px;
+    }
+    .row2{
+      display:grid;
+      grid-template-columns: 1fr;
+      gap:10px;
+    }
+    @media (min-width: 560px){
+      .row2{ grid-template-columns: 1fr 220px; }
+    }
+
+    input{
+      width:100%;
+      box-sizing:border-box;
+      padding:12px;
+      border-radius:14px;
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(11,18,32,.85);
+      color: var(--text);
+      outline:none;
+      font-size:15px;
+    }
+
+    .btn{
+      display:inline-block;
+      width:100%;
+      text-align:center;
+      text-decoration:none;
+      padding:12px 14px;
+      border-radius:16px;
+      font-size:14px;
+      font-weight:900;
+      letter-spacing:.3px;
+      color:var(--text);
+      border: 1px solid rgba(124,196,255,.28);
+      background: linear-gradient(180deg, rgba(124,196,255,.28), rgba(124,196,255,.10));
+      cursor:pointer;
+    }
+    .btn.secondary{
+      border: 1px solid rgba(255,255,255,.14);
+      background: linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.03));
+      color: var(--muted);
+      font-weight:850;
+    }
+
+    .list{
+      display:grid;
+      gap:10px;
+    }
+    .item{
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.03);
+      border-radius:16px;
+      padding:12px;
+      cursor:pointer;
+      transition: transform .06s ease;
+    }
+    .item:active{ transform: translateY(1px); }
+    .itemTop{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:10px;
+      margin-bottom:6px;
+    }
+    .pill{
+      display:inline-block;
+      font-size:12px;
+      padding:6px 10px;
+      border-radius:999px;
+      border:1px solid rgba(124,196,255,.25);
+      background: rgba(124,196,255,.10);
+      color: var(--text);
+      font-weight:850;
+      white-space:nowrap;
+    }
+    .pill.ok{
+      border:1px solid rgba(98,230,165,.25);
+      background: rgba(98,230,165,.10);
+    }
+    .meta{
+      color: var(--muted);
+      font-size:12px;
+      line-height:1.25;
+    }
+
+    /* note max 2 righe + ... */
+    .preview{
+      margin-top:8px;
+      font-size:13px;
+      color: rgba(232,238,246,.92);
+      display:-webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow:hidden;
+    }
+
+    .detailTitle{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      margin: 0 0 10px;
+    }
+    .detailTitle h2{
+      margin:0;
+      font-size:15px;
+      letter-spacing:.2px;
+    }
+    .kv{
+      display:grid;
+      gap:8px;
+      margin-bottom: 12px;
+    }
+    .kv .box{
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.03);
+      border-radius:14px;
+      padding:10px 12px;
+      font-size:13px;
+    }
+    .kv b{ color: var(--text); }
+    .muted{ color: var(--muted); }
+
+    .noteFull{
+      white-space: pre-wrap;
+      line-height: 1.35;
+    }
+
+    .attachGrid{
+      display:grid;
+      grid-template-columns: 1fr;
+      gap:10px;
+      margin-top: 10px;
+    }
+    @media (min-width: 560px){
+      .attachGrid{ grid-template-columns: 1fr 1fr; }
+    }
+    .attach{
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.03);
+      border-radius:16px;
+      padding:10px;
+    }
+    .attachName{
+      font-size:12px;
+      color: var(--muted);
+      margin:0 0 8px;
+      word-break: break-word;
+    }
+    img.previewImg{
+      width:100%;
+      height:auto;
+      border-radius:12px;
+      border:1px solid rgba(255,255,255,.08);
+      display:block;
+    }
+    video.previewVid{
+      width:100%;
+      border-radius:12px;
+      border:1px solid rgba(255,255,255,.08);
+      display:block;
+    }
+    a.fileLink{
+      display:inline-block;
+      color: var(--text);
+      font-weight: 850;
+      text-decoration:none;
+      border: 1px solid rgba(124,196,255,.28);
+      background: rgba(124,196,255,.10);
+      padding:10px 12px;
+      border-radius:14px;
+    }
+
+    .empty{
+      padding:12px;
+      border-radius:14px;
+      border:1px dashed rgba(255,255,255,.18);
+      color: var(--muted);
+      background: rgba(255,255,255,.02);
+      font-size:13px;
+      text-align:center;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="top">
+      <img class="logo" src="{{ url_for('static', filename='img/LOGO.png') }}" alt="Logo">
+      <h1>Storico Report</h1>
+      <p class="hint">Cerca e apri i report salvati (Excel + allegati).</p>
+    </div>
+
+    <div class="grid">
+      <!-- LISTA -->
+      <div class="card">
+        <div class="controls">
+          <div class="row2">
+            <input id="q" type="text" placeholder="Cerca: robot, zona, errore, note…">
+            <button id="btnSearch" class="btn" type="button">Cerca</button>
+          </div>
+
+          <div class="row2">
+            <input id="robot" type="text" placeholder="Filtro robot (es. 16278)">
+            <button id="btnReset" class="btn secondary" type="button">Reset</button>
+          </div>
+        </div>
+
+        <div id="list" class="list"></div>
+        <div id="listEmpty" class="empty" style="display:none;">Nessun report trovato.</div>
+      </div>
+
+      <!-- DETTAGLIO -->
+      <div class="card" id="detailCard">
+        <div class="detailTitle">
+          <h2>Dettaglio</h2>
+          <a class="btn secondary" style="width:auto; padding:10px 12px;" href="/MedicairGeek/">Home</a>
+        </div>
+
+        <div id="detailEmpty" class="empty">Seleziona un report dalla lista.</div>
+
+        <div id="detail" style="display:none;">
+          <div class="kv" id="kv"></div>
+
+          <div class="kv">
+            <div class="box">
+              <b>Note / Descrizione</b><br>
+              <span class="noteFull" id="noteFull"></span>
+            </div>
+          </div>
+
+          <div class="kv">
+            <div class="box">
+              <b>Allegati</b><br>
+              <span class="muted" id="attachMeta"></span>
+
+              <div class="attachGrid" id="attachGrid"></div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const listEl = document.getElementById("list");
+    const listEmptyEl = document.getElementById("listEmpty");
+
+    const qEl = document.getElementById("q");
+    const robotEl = document.getElementById("robot");
+    const btnSearch = document.getElementById("btnSearch");
+    const btnReset = document.getElementById("btnReset");
+
+    const detailEmpty = document.getElementById("detailEmpty");
+    const detail = document.getElementById("detail");
+    const kvEl = document.getElementById("kv");
+    const noteFullEl = document.getElementById("noteFull");
+    const attachGrid = document.getElementById("attachGrid");
+    const attachMeta = document.getElementById("attachMeta");
+
+    function esc(s){
+      return String(s ?? "").replace(/[&<>"']/g, m => ({
+        "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"
+      }[m]));
+    }
+
+    function setListLoading(){
+      listEl.innerHTML = `
+        <div class="empty">Caricamento…</div>
+      `;
+      listEmptyEl.style.display = "none";
+    }
+
+    function renderList(items){
+      listEl.innerHTML = "";
+      if(!items || !items.length){
+        listEmptyEl.style.display = "block";
+        return;
+      }
+      listEmptyEl.style.display = "none";
+
+      for(const it of items){
+        const has = !!it.has_folder;
+        const pill = has ? `<span class="pill ok">ALLEGATI</span>` : `<span class="pill">SOLO EXCEL</span>`;
+
+        const div = document.createElement("div");
+        div.className = "item";
+        div.innerHTML = `
+          <div class="itemTop">
+            <div>
+              ${pill}
+              <div class="meta" style="margin-top:8px;">
+                <b>ID:</b> ${esc(it.id)}<br>
+                <b>Data:</b> ${esc(it.dt_label)}<br>
+                <b>Robot:</b> ${esc(it.robot)}
+              </div>
+            </div>
+          </div>
+          <div class="preview">${esc(it.note_preview || "")}</div>
+        `;
+
+        div.addEventListener("click", () => loadDetail(it.id));
+        listEl.appendChild(div);
+      }
+    }
+
+    async function loadList(){
+      setListLoading();
+
+      const q = (qEl.value || "").trim();
+      const robot = (robotEl.value || "").trim();
+
+      const params = new URLSearchParams();
+      if(q) params.set("q", q);
+      if(robot) params.set("robot", robot);
+      params.set("limit", "300");
+
+      const res = await fetch(`/MedicairGeek/ConsultaReport/list?${params.toString()}`, { cache: "no-store" });
+      const data = await res.json();
+      if(!data.ok){
+        listEl.innerHTML = `<div class="empty">Errore nel caricamento lista.</div>`;
+        return;
+      }
+      renderList(data.reports || []);
+    }
+
+    function setDetailLoading(){
+      detailEmpty.style.display = "none";
+      detail.style.display = "block";
+      kvEl.innerHTML = `<div class="box">Caricamento…</div>`;
+      noteFullEl.textContent = "";
+      attachGrid.innerHTML = "";
+      attachMeta.textContent = "";
+    }
+
+    function renderKV(r){
+      kvEl.innerHTML = "";
+      const rows = [
+        ["ID", r.id],
+        ["Data", r.dt_label],
+        ["Robot", r.robot],
+        ["Zona", r.zona],
+        ["Scaffale", r.scaffale || "—"],
+        ["Cella", r.cella || "—"],
+        ["Luci", r.luci || "—"],
+        ["Errore", r.errore || "—"],
+        ["Cartella", r.folder_name || "—"]
+      ];
+
+      for(const [k,v] of rows){
+        const b = document.createElement("div");
+        b.className = "box";
+        b.innerHTML = `<b>${esc(k)}:</b> <span class="muted">${esc(v)}</span>`;
+        kvEl.appendChild(b);
+      }
+    }
+
+    function renderAttachments(att){
+      attachGrid.innerHTML = "";
+      if(!att || !att.length){
+        attachMeta.textContent = "Nessun allegato disponibile.";
+        attachGrid.innerHTML = `<div class="empty">Nessun file trovato nella cartella report.</div>`;
+        return;
+      }
+
+      attachMeta.textContent = `${att.length} file`;
+
+      for(const a of att){
+        const div = document.createElement("div");
+        div.className = "attach";
+
+        const name = esc(a.name || "");
+        const url = esc(a.url || "#");
+        const kind = a.kind || "file";
+
+        let body = "";
+        if(kind === "image"){
+          body = `<img class="previewImg" src="${url}" alt="${name}" loading="lazy">`;
+        }else if(kind === "video"){
+          body = `<video class="previewVid" src="${url}" controls preload="metadata"></video>`;
+        }else{
+          body = `<a class="fileLink" href="${url}" target="_blank" rel="noopener">Apri file</a>`;
+        }
+
+        div.innerHTML = `
+          <p class="attachName">${name}</p>
+          ${body}
+        `;
+        attachGrid.appendChild(div);
+      }
+    }
+
+    async function loadDetail(id){
+      setDetailLoading();
+      const res = await fetch(`/MedicairGeek/ConsultaReport/report/${id}`, { cache: "no-store" });
+      const data = await res.json();
+
+      if(!data.ok){
+        kvEl.innerHTML = `<div class="box">Report non trovato.</div>`;
+        return;
+      }
+
+      const r = data.report;
+      renderKV(r);
+      noteFullEl.textContent = r.note || "";
+      renderAttachments(r.attachments || []);
+    }
+
+    btnSearch.addEventListener("click", loadList);
+    btnReset.addEventListener("click", () => {
+      qEl.value = "";
+      robotEl.value = "";
+      detail.style.display = "none";
+      detailEmpty.style.display = "block";
+      loadList();
+    });
+
+    // auto-load
+    loadList();
+  </script>
+</body>
+</html>
