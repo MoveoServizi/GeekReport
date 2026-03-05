@@ -269,3 +269,10 @@ def serve_report_media(folder_name: str, filename: str):
         abort(404)
 
     return send_from_directory(directory=str(folder), path=filename, as_attachment=False)
+
+# dentro consulta_report.py
+
+@consulta_report_bp.get("/MedicairGeek/storicoReport/<int:report_id>")
+def storico_report_detail_page(report_id: int):
+    # pagina dedicata (JS chiama l'API e renderizza)
+    return render_template("reportDetail.html", title=f"Dettaglio Report #{report_id}", report_id=report_id)

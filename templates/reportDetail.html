@@ -1,0 +1,297 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>{{ title }}</title>
+  <style>
+    :root{
+      --bg:#0b0f14;
+      --card:#0f1620;
+      --muted:#9fb0c0;
+      --text:#e8eef6;
+      --border:rgba(255,255,255,.10);
+      --accent:#7cc4ff;
+      --accent2:#62e6a5;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+    }
+    body{
+      margin:0;
+      min-height:100vh;
+      background:
+        radial-gradient(1200px 500px at 20% -10%, rgba(124,196,255,.18), transparent 60%),
+        radial-gradient(900px 500px at 110% 10%, rgba(98,230,165,.12), transparent 55%),
+        var(--bg);
+      color:var(--text);
+    }
+    .wrap{ width:min(900px, 94vw); margin:0 auto; padding:14px 14px 26px; }
+
+    .top{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      margin: 6px 0 12px;
+    }
+    .left{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      min-width:0;
+    }
+    .logo{
+      width:54px; height:54px; border-radius:16px;
+      object-fit:contain;
+      background: rgba(255,255,255,.06);
+      border:1px solid rgba(255,255,255,.08);
+      padding:8px;
+      flex:0 0 auto;
+    }
+    h1{
+      margin:0;
+      font-size:16px;
+      letter-spacing:.2px;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+    .btn{
+      display:inline-block;
+      text-decoration:none;
+      padding:10px 12px;
+      border-radius:16px;
+      font-size:13px;
+      font-weight:900;
+      letter-spacing:.3px;
+      color:var(--text);
+      border: 1px solid rgba(255,255,255,.14);
+      background: linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.03));
+    }
+
+    .card{
+      background: linear-gradient(180deg, rgba(255,255,255,.03), transparent 55%), var(--card);
+      border:1px solid var(--border);
+      border-radius:18px;
+      padding:14px;
+      box-shadow: 0 14px 40px rgba(0,0,0,.45);
+    }
+
+    .kv{
+      display:grid;
+      grid-template-columns: 1fr;
+      gap:10px;
+      margin-bottom:12px;
+    }
+    @media (min-width: 720px){
+      .kv{ grid-template-columns: 1fr 1fr; }
+    }
+    .box{
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.03);
+      border-radius:14px;
+      padding:10px 12px;
+      font-size:13px;
+      line-height:1.25;
+    }
+    .box b{ color: var(--text); }
+    .muted{ color: var(--muted); }
+
+    .sectionTitle{
+      margin: 10px 0 8px;
+      font-size:12px;
+      color: var(--muted);
+      font-weight:900;
+      text-transform: uppercase;
+      letter-spacing: .3px;
+    }
+
+    .note{
+      white-space: pre-wrap;
+      line-height: 1.35;
+      font-size:14px;
+    }
+
+    .attachGrid{
+      display:grid;
+      grid-template-columns: 1fr;
+      gap:10px;
+      margin-top: 10px;
+    }
+    @media (min-width: 560px){
+      .attachGrid{ grid-template-columns: 1fr 1fr; }
+    }
+    .attach{
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.03);
+      border-radius:16px;
+      padding:10px;
+    }
+    .attachName{
+      font-size:12px;
+      color: var(--muted);
+      margin:0 0 8px;
+      word-break: break-word;
+    }
+    img.previewImg{
+      width:100%;
+      height:auto;
+      border-radius:12px;
+      border:1px solid rgba(255,255,255,.08);
+      display:block;
+    }
+    video.previewVid{
+      width:100%;
+      border-radius:12px;
+      border:1px solid rgba(255,255,255,.08);
+      display:block;
+    }
+    a.fileLink{
+      display:inline-block;
+      color: var(--text);
+      font-weight: 900;
+      text-decoration:none;
+      border: 1px solid rgba(124,196,255,.28);
+      background: rgba(124,196,255,.10);
+      padding:10px 12px;
+      border-radius:14px;
+    }
+
+    .empty{
+      padding:12px;
+      border-radius:14px;
+      border:1px dashed rgba(255,255,255,.18);
+      color: var(--muted);
+      background: rgba(255,255,255,.02);
+      font-size:13px;
+      text-align:center;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+    <div class="top">
+      <div class="left">
+        <img class="logo" src="{{ url_for('static', filename='img/LOGO.png') }}" alt="Logo">
+        <h1>Dettaglio Report #{{ report_id }}</h1>
+      </div>
+      <a class="btn" href="/MedicairGeek/storicoReport">← Storico</a>
+    </div>
+
+    <div class="card">
+      <div id="loading" class="empty">Caricamento…</div>
+
+      <div id="content" style="display:none;">
+        <div class="kv" id="kv"></div>
+
+        <div class="sectionTitle">Note / Descrizione</div>
+        <div class="box">
+          <div class="note" id="note"></div>
+        </div>
+
+        <div class="sectionTitle">Allegati</div>
+        <div class="box">
+          <div class="muted" id="attachMeta"></div>
+          <div class="attachGrid" id="attachGrid"></div>
+        </div>
+      </div>
+
+      <div id="error" class="empty" style="display:none;">Report non trovato.</div>
+    </div>
+  </div>
+
+  <script>
+    const reportId = {{ report_id|int }};
+    const loading = document.getElementById("loading");
+    const content = document.getElementById("content");
+    const errorBox = document.getElementById("error");
+
+    const kvEl = document.getElementById("kv");
+    const noteEl = document.getElementById("note");
+    const attachMeta = document.getElementById("attachMeta");
+    const attachGrid = document.getElementById("attachGrid");
+
+    function esc(s){
+      return String(s ?? "").replace(/[&<>"']/g, m => ({
+        "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"
+      }[m]));
+    }
+
+    function renderKV(r){
+      kvEl.innerHTML = "";
+      const rows = [
+        ["ID", r.id],
+        ["Data", r.dt_label],
+        ["Robot", r.robot],
+        ["Zona", r.zona],
+        ["Scaffale", r.scaffale || "—"],
+        ["Cella", r.cella || "—"],
+        ["Luci", r.luci || "—"],
+        ["Errore", r.errore || "—"],
+        ["Cartella", r.folder_name || "—"],
+      ];
+      for(const [k,v] of rows){
+        const d = document.createElement("div");
+        d.className = "box";
+        d.innerHTML = `<b>${esc(k)}:</b> <span class="muted">${esc(v)}</span>`;
+        kvEl.appendChild(d);
+      }
+    }
+
+    function renderAttachments(att){
+      attachGrid.innerHTML = "";
+      if(!att || !att.length){
+        attachMeta.textContent = "Nessun allegato disponibile.";
+        attachGrid.innerHTML = `<div class="empty">Nessun file trovato nella cartella report.</div>`;
+        return;
+      }
+      attachMeta.textContent = `${att.length} file`;
+
+      for(const a of att){
+        const div = document.createElement("div");
+        div.className = "attach";
+
+        const name = esc(a.name || "");
+        const url = esc(a.url || "#");
+        const kind = a.kind || "file";
+
+        let body = "";
+        if(kind === "image"){
+          body = `<img class="previewImg" src="${url}" alt="${name}" loading="lazy">`;
+        }else if(kind === "video"){
+          body = `<video class="previewVid" src="${url}" controls preload="metadata"></video>`;
+        }else{
+          body = `<a class="fileLink" href="${url}" target="_blank" rel="noopener">Apri file</a>`;
+        }
+
+        div.innerHTML = `<p class="attachName">${name}</p>${body}`;
+        attachGrid.appendChild(div);
+      }
+    }
+
+    (async function(){
+      try{
+        const res = await fetch(`/MedicairGeek/ConsultaReport/report/${reportId}`, { cache:"no-store" });
+        const data = await res.json();
+
+        if(!data.ok){
+          loading.style.display = "none";
+          errorBox.style.display = "block";
+          return;
+        }
+
+        const r = data.report;
+        renderKV(r);
+        noteEl.textContent = r.note || "";
+        renderAttachments(r.attachments || []);
+
+        loading.style.display = "none";
+        content.style.display = "block";
+      }catch(e){
+        loading.style.display = "none";
+        errorBox.style.display = "block";
+      }
+    })();
+  </script>
+</body>
+</html>

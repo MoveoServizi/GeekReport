@@ -24,7 +24,7 @@
         var(--bg);
       color:var(--text);
     }
-    .wrap{ width:min(900px, 94vw); margin:0 auto; padding:14px 14px 26px; }
+    .wrap{ width:min(920px, 94vw); margin:0 auto; padding:14px 14px 26px; }
 
     .top{
       display:flex;
@@ -44,15 +44,6 @@
     h1{ margin:0; font-size:18px; letter-spacing:.2px; }
     .hint{ margin:0; color:var(--muted); font-size:13px; }
 
-    .grid{
-      display:grid;
-      grid-template-columns: 1fr;
-      gap:12px;
-    }
-    @media (min-width: 860px){
-      .grid{ grid-template-columns: 1.05fr .95fr; align-items:start; }
-    }
-
     .card{
       background: linear-gradient(180deg, rgba(255,255,255,.03), transparent 55%), var(--card);
       border:1px solid var(--border);
@@ -64,7 +55,7 @@
     .controls{
       display:grid;
       gap:10px;
-      margin-bottom: 10px;
+      margin-bottom: 12px;
     }
     .row2{
       display:grid;
@@ -109,26 +100,41 @@
       font-weight:850;
     }
 
+    .topActions{
+      display:grid;
+      grid-template-columns: 1fr;
+      gap:10px;
+      margin-top: 4px;
+      width: 100%;
+      max-width: 520px;
+    }
+    @media (min-width: 560px){
+      .topActions{ grid-template-columns: 1fr 1fr; }
+    }
+
     .list{
       display:grid;
       gap:10px;
     }
+
     .item{
       border:1px solid rgba(255,255,255,.10);
       background: rgba(255,255,255,.03);
       border-radius:16px;
       padding:12px;
       cursor:pointer;
-      transition: transform .06s ease;
-    }
-    .item:active{ transform: translateY(1px); }
-    .itemTop{
+      transition: transform .06s ease, border-color .12s ease;
       display:flex;
+      gap:12px;
       align-items:flex-start;
       justify-content:space-between;
-      gap:10px;
-      margin-bottom:6px;
     }
+    .item:hover{ border-color: rgba(124,196,255,.22); }
+    .item:active{ transform: translateY(1px); }
+
+    .itemLeft{ min-width:0; flex: 1 1 auto; }
+    .itemRight{ flex: 0 0 auto; display:flex; align-items:center; gap:10px; }
+
     .pill{
       display:inline-block;
       font-size:12px;
@@ -144,10 +150,12 @@
       border:1px solid rgba(98,230,165,.25);
       background: rgba(98,230,165,.10);
     }
+
     .meta{
       color: var(--muted);
       font-size:12px;
       line-height:1.25;
+      margin-top:8px;
     }
 
     /* note max 2 righe + ... */
@@ -161,81 +169,13 @@
       overflow:hidden;
     }
 
-    .detailTitle{
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:10px;
-      margin: 0 0 10px;
-    }
-    .detailTitle h2{
-      margin:0;
-      font-size:15px;
-      letter-spacing:.2px;
-    }
-    .kv{
-      display:grid;
-      gap:8px;
-      margin-bottom: 12px;
-    }
-    .kv .box{
-      border:1px solid rgba(255,255,255,.10);
-      background: rgba(255,255,255,.03);
-      border-radius:14px;
-      padding:10px 12px;
-      font-size:13px;
-    }
-    .kv b{ color: var(--text); }
-    .muted{ color: var(--muted); }
-
-    .noteFull{
-      white-space: pre-wrap;
-      line-height: 1.35;
-    }
-
-    .attachGrid{
-      display:grid;
-      grid-template-columns: 1fr;
-      gap:10px;
-      margin-top: 10px;
-    }
-    @media (min-width: 560px){
-      .attachGrid{ grid-template-columns: 1fr 1fr; }
-    }
-    .attach{
-      border:1px solid rgba(255,255,255,.10);
-      background: rgba(255,255,255,.03);
-      border-radius:16px;
-      padding:10px;
-    }
-    .attachName{
-      font-size:12px;
-      color: var(--muted);
-      margin:0 0 8px;
-      word-break: break-word;
-    }
-    img.previewImg{
-      width:100%;
-      height:auto;
-      border-radius:12px;
-      border:1px solid rgba(255,255,255,.08);
-      display:block;
-    }
-    video.previewVid{
-      width:100%;
-      border-radius:12px;
-      border:1px solid rgba(255,255,255,.08);
-      display:block;
-    }
-    a.fileLink{
-      display:inline-block;
-      color: var(--text);
-      font-weight: 850;
-      text-decoration:none;
-      border: 1px solid rgba(124,196,255,.28);
-      background: rgba(124,196,255,.10);
-      padding:10px 12px;
-      border-radius:14px;
+    .chev{
+      color: rgba(232,238,246,.55);
+      font-weight: 900;
+      font-size: 18px;
+      line-height: 1;
+      margin-top: 4px;
+      user-select:none;
     }
 
     .empty{
@@ -247,6 +187,13 @@
       font-size:13px;
       text-align:center;
     }
+
+    .smallNote{
+      margin-top:10px;
+      color: rgba(159,176,192,.85);
+      font-size: 12px;
+      text-align:center;
+    }
   </style>
 </head>
 <body>
@@ -255,57 +202,30 @@
       <img class="logo" src="{{ url_for('static', filename='img/LOGO.png') }}" alt="Logo">
       <h1>Storico Report</h1>
       <p class="hint">Cerca e apri i report salvati (Excel + allegati).</p>
+
+      <div class="topActions">
+        <a class="btn secondary" href="/MedicairGeek/">← Home</a>
+        <button class="btn" id="btnReload" type="button">Aggiorna</button>
+      </div>
     </div>
 
-    <div class="grid">
-      <!-- LISTA -->
-      <div class="card">
-        <div class="controls">
-          <div class="row2">
-            <input id="q" type="text" placeholder="Cerca: robot, zona, errore, note…">
-            <button id="btnSearch" class="btn" type="button">Cerca</button>
-          </div>
-
-          <div class="row2">
-            <input id="robot" type="text" placeholder="Filtro robot (es. 16278)">
-            <button id="btnReset" class="btn secondary" type="button">Reset</button>
-          </div>
+    <div class="card">
+      <div class="controls">
+        <div class="row2">
+          <input id="q" type="text" placeholder="Cerca: robot, zona, errore, note…">
+          <button id="btnSearch" class="btn" type="button">Cerca</button>
         </div>
 
-        <div id="list" class="list"></div>
-        <div id="listEmpty" class="empty" style="display:none;">Nessun report trovato.</div>
-      </div>
-
-      <!-- DETTAGLIO -->
-      <div class="card" id="detailCard">
-        <div class="detailTitle">
-          <h2>Dettaglio</h2>
-          <a class="btn secondary" style="width:auto; padding:10px 12px;" href="/MedicairGeek/">Home</a>
-        </div>
-
-        <div id="detailEmpty" class="empty">Seleziona un report dalla lista.</div>
-
-        <div id="detail" style="display:none;">
-          <div class="kv" id="kv"></div>
-
-          <div class="kv">
-            <div class="box">
-              <b>Note / Descrizione</b><br>
-              <span class="noteFull" id="noteFull"></span>
-            </div>
-          </div>
-
-          <div class="kv">
-            <div class="box">
-              <b>Allegati</b><br>
-              <span class="muted" id="attachMeta"></span>
-
-              <div class="attachGrid" id="attachGrid"></div>
-            </div>
-          </div>
-
+        <div class="row2">
+          <input id="robot" type="text" placeholder="Filtro robot (es. 16278)">
+          <button id="btnReset" class="btn secondary" type="button">Reset</button>
         </div>
       </div>
+
+      <div id="list" class="list"></div>
+      <div id="listEmpty" class="empty" style="display:none;">Nessun report trovato.</div>
+
+      <div class="smallNote">Suggerimento: usa il filtro robot per trovare subito un ID specifico.</div>
     </div>
   </div>
 
@@ -317,13 +237,7 @@
     const robotEl = document.getElementById("robot");
     const btnSearch = document.getElementById("btnSearch");
     const btnReset = document.getElementById("btnReset");
-
-    const detailEmpty = document.getElementById("detailEmpty");
-    const detail = document.getElementById("detail");
-    const kvEl = document.getElementById("kv");
-    const noteFullEl = document.getElementById("noteFull");
-    const attachGrid = document.getElementById("attachGrid");
-    const attachMeta = document.getElementById("attachMeta");
+    const btnReload = document.getElementById("btnReload");
 
     function esc(s){
       return String(s ?? "").replace(/[&<>"']/g, m => ({
@@ -332,10 +246,12 @@
     }
 
     function setListLoading(){
-      listEl.innerHTML = `
-        <div class="empty">Caricamento…</div>
-      `;
+      listEl.innerHTML = `<div class="empty">Caricamento…</div>`;
       listEmptyEl.style.display = "none";
+    }
+
+    function goDetail(id){
+      window.location.href = `/MedicairGeek/storicoReport/${id}`;
     }
 
     function renderList(items){
@@ -348,25 +264,29 @@
 
       for(const it of items){
         const has = !!it.has_folder;
-        const pill = has ? `<span class="pill ok">ALLEGATI</span>` : `<span class="pill">SOLO EXCEL</span>`;
+        const pill = has
+          ? `<span class="pill ok">📎 Allegati</span>`
+          : `<span class="pill">Solo Excel</span>`;
 
         const div = document.createElement("div");
         div.className = "item";
         div.innerHTML = `
-          <div class="itemTop">
-            <div>
-              ${pill}
-              <div class="meta" style="margin-top:8px;">
-                <b>ID:</b> ${esc(it.id)}<br>
-                <b>Data:</b> ${esc(it.dt_label)}<br>
-                <b>Robot:</b> ${esc(it.robot)}
-              </div>
+          <div class="itemLeft">
+            ${pill}
+            <div class="meta">
+              <b>ID:</b> ${esc(it.id)}<br>
+              <b>Data:</b> ${esc(it.dt_label)}<br>
+              <b>Robot:</b> ${esc(it.robot)}
             </div>
+            <div class="preview">${esc(it.note_preview || "")}</div>
           </div>
-          <div class="preview">${esc(it.note_preview || "")}</div>
+
+          <div class="itemRight">
+            <div class="chev">›</div>
+          </div>
         `;
 
-        div.addEventListener("click", () => loadDetail(it.id));
+        div.addEventListener("click", () => goDetail(it.id));
         listEl.appendChild(div);
       }
     }
@@ -382,105 +302,48 @@
       if(robot) params.set("robot", robot);
       params.set("limit", "300");
 
-      const res = await fetch(`/MedicairGeek/ConsultaReport/list?${params.toString()}`, { cache: "no-store" });
-      const data = await res.json();
-      if(!data.ok){
-        listEl.innerHTML = `<div class="empty">Errore nel caricamento lista.</div>`;
-        return;
-      }
-      renderList(data.reports || []);
-    }
+      try{
+        const res = await fetch(`/MedicairGeek/ConsultaReport/list?${params.toString()}`, { cache: "no-store" });
+        const data = await res.json();
 
-    function setDetailLoading(){
-      detailEmpty.style.display = "none";
-      detail.style.display = "block";
-      kvEl.innerHTML = `<div class="box">Caricamento…</div>`;
-      noteFullEl.textContent = "";
-      attachGrid.innerHTML = "";
-      attachMeta.textContent = "";
-    }
-
-    function renderKV(r){
-      kvEl.innerHTML = "";
-      const rows = [
-        ["ID", r.id],
-        ["Data", r.dt_label],
-        ["Robot", r.robot],
-        ["Zona", r.zona],
-        ["Scaffale", r.scaffale || "—"],
-        ["Cella", r.cella || "—"],
-        ["Luci", r.luci || "—"],
-        ["Errore", r.errore || "—"],
-        ["Cartella", r.folder_name || "—"]
-      ];
-
-      for(const [k,v] of rows){
-        const b = document.createElement("div");
-        b.className = "box";
-        b.innerHTML = `<b>${esc(k)}:</b> <span class="muted">${esc(v)}</span>`;
-        kvEl.appendChild(b);
-      }
-    }
-
-    function renderAttachments(att){
-      attachGrid.innerHTML = "";
-      if(!att || !att.length){
-        attachMeta.textContent = "Nessun allegato disponibile.";
-        attachGrid.innerHTML = `<div class="empty">Nessun file trovato nella cartella report.</div>`;
-        return;
-      }
-
-      attachMeta.textContent = `${att.length} file`;
-
-      for(const a of att){
-        const div = document.createElement("div");
-        div.className = "attach";
-
-        const name = esc(a.name || "");
-        const url = esc(a.url || "#");
-        const kind = a.kind || "file";
-
-        let body = "";
-        if(kind === "image"){
-          body = `<img class="previewImg" src="${url}" alt="${name}" loading="lazy">`;
-        }else if(kind === "video"){
-          body = `<video class="previewVid" src="${url}" controls preload="metadata"></video>`;
-        }else{
-          body = `<a class="fileLink" href="${url}" target="_blank" rel="noopener">Apri file</a>`;
+        if(!data.ok){
+          listEl.innerHTML = `<div class="empty">Errore nel caricamento lista.</div>`;
+          return;
         }
 
-        div.innerHTML = `
-          <p class="attachName">${name}</p>
-          ${body}
-        `;
-        attachGrid.appendChild(div);
+        renderList(data.reports || []);
+        // salva filtri (così se torni indietro li ritrovi)
+        localStorage.setItem("storico_q", q);
+        localStorage.setItem("storico_robot", robot);
+      }catch(e){
+        listEl.innerHTML = `<div class="empty">Errore di rete.</div>`;
       }
     }
 
-    async function loadDetail(id){
-      setDetailLoading();
-      const res = await fetch(`/MedicairGeek/ConsultaReport/report/${id}`, { cache: "no-store" });
-      const data = await res.json();
-
-      if(!data.ok){
-        kvEl.innerHTML = `<div class="box">Report non trovato.</div>`;
-        return;
-      }
-
-      const r = data.report;
-      renderKV(r);
-      noteFullEl.textContent = r.note || "";
-      renderAttachments(r.attachments || []);
-    }
-
+    // Eventi
     btnSearch.addEventListener("click", loadList);
+
     btnReset.addEventListener("click", () => {
       qEl.value = "";
       robotEl.value = "";
-      detail.style.display = "none";
-      detailEmpty.style.display = "block";
+      localStorage.removeItem("storico_q");
+      localStorage.removeItem("storico_robot");
       loadList();
     });
+
+    btnReload.addEventListener("click", loadList);
+
+    // Invio con Enter
+    qEl.addEventListener("keydown", (e) => { if(e.key === "Enter") loadList(); });
+    robotEl.addEventListener("keydown", (e) => { if(e.key === "Enter") loadList(); });
+
+    // Ripristina filtri
+    (function restoreFilters(){
+      const q = localStorage.getItem("storico_q") || "";
+      const robot = localStorage.getItem("storico_robot") || "";
+      qEl.value = q;
+      robotEl.value = robot;
+    })();
 
     // auto-load
     loadList();
