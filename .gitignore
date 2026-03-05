@@ -20,3 +20,5 @@ Thumbs.db
 # Runtime / generated
 report/
 *.xlsx
+logs/email/email_log.jsonl
+latex/tmp/

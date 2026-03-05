@@ -1,0 +1,141 @@
+% latex/templates/report_incidente.tex
+% Modello LaTeX per Report Incidente (Report Geek)
+% - Logo: img/LOGO.png (copiato nella cartella di compilazione)
+% - AllegatiList: generata dal Python in formato \FileItem{...}
+
+\documentclass[11pt,a4paper]{article}
+
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[italian]{babel}
+\usepackage{lmodern}
+\usepackage{microtype}
+
+\usepackage[a4paper,top=18mm,bottom=30mm,left=20mm,right=20mm,headheight=30pt,headsep=8mm,footskip=22mm]{geometry}
+
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{xcolor}
+\usepackage{fancyhdr}
+
+% Tabelle
+\usepackage{booktabs}
+\usepackage{tabularray}
+\UseTblrLibrary{booktabs}
+
+% --- Colori tema (sobri) ---
+\definecolor{RGAccent}{HTML}{1E3A8A}   % blu scuro
+\definecolor{RGGray}{HTML}{6B7280}     % grigio testo
+\definecolor{RGLine}{HTML}{E5E7EB}     % grigio chiaro
+\definecolor{RGHeadBg}{HTML}{F3F4F6}   % header tabella
+
+% --- Macro robusta per mostrare nomi file con caratteri speciali (_, %, & ecc.) ---
+\newcommand{\FileItem}[1]{\item \texttt{\detokenize{#1}}}
+
+% ---- Dati (placeholder compilati dal Python) ----
+% Nota: le graffe esterne sono IMPORTANTI per evitare errori \newcommand...
+\newcommand{\ReportID}{ {{{ReportID}}} }
+\newcommand{\DataIncidente}{ {{{DataIncidente}}} }
+\newcommand{\OraIncidente}{ {{{OraIncidente}}} }
+\newcommand{\Robot}{ {{{Robot}}} }
+\newcommand{\Scaffale}{ {{{Scaffale}}} }
+\newcommand{\Cella}{ {{{Cella}}} }
+\newcommand{\Zona}{ {{{Zona}}} }
+\newcommand{\LuciRobot}{ {{{LuciRobot}}} }
+\newcommand{\Errore}{ {{{Errore}}} }
+\newcommand{\Rimosso}{ {{{Rimosso}}} }
+\newcommand{\Risoluzione}{ {{{Risoluzione}}} }
+\newcommand{\Descrizione}{ {{{Descrizione}}} }
+
+% AllegatiList viene passata dal Python come raw latex:
+% \FileItem{nome_file_con_underscore.png}
+\newcommand{\AllegatiList}{%
+{{{AllegatiList}}}
+}
+
+% ---- Header / Footer ----
+\pagestyle{fancy}
+\fancyhf{} % clear
+
+% Header: logo a sinistra + titolo a destra
+\fancyhead[L]{%
+  \raisebox{-0.25\height}{\includegraphics[height=20mm]{img/LOGO.png}}%
+}
+\fancyhead[R]{\textcolor{RGGray}{\small REPORT INCIDENTE}}
+\renewcommand{\headrulewidth}{0pt}
+\renewcommand{\footrulewidth}{0pt}
+
+% Footer: due minipage + pagina al centro
+\fancyfoot[L]{%
+  \raisebox{3mm}{%
+    \begin{minipage}[t]{0.42\textwidth}\raggedright\footnotesize\textcolor{RGGray}{%
+      Moveo Servizi Spa\\
+      Via Molino delle Armi 11\\
+      20123, Milano
+    }\end{minipage}%
+  }%
+}
+\fancyfoot[C]{\raisebox{3mm}{\footnotesize\textcolor{RGGray}{\thepage}}}
+\fancyfoot[R]{%
+  \raisebox{3mm}{%
+    \begin{minipage}[t]{0.42\textwidth}\raggedleft\footnotesize\textcolor{RGGray}{%
+      Tel.\ 039\ 9630801\\
+      P.IVA 04114560164\\
+      info@moveoservizi.com
+    }\end{minipage}%
+  }%
+}
+
+% ---- Tabella key-value ----
+\newcommand{\KVTable}[1]{%
+  \begin{tblr}{
+    colspec={Q[l,wd=0.30\linewidth] Q[l,wd=0.68\linewidth]},
+    row{1}={bg=RGHeadBg,font=\bfseries},
+    rows={abovesep=3pt,belowsep=3pt},
+    hlines={RGLine},
+    vlines={RGLine},
+    cell{1}{1}={fg=RGAccent},
+    cell{1}{2}={fg=RGAccent},
+    leftsep=6pt,rightsep=6pt,
+  }
+  Campo & Valore \\
+  #1
+  \end{tblr}
+}
+
+\begin{document}
+
+{\LARGE \textbf{REPORT PER INCIDENTE}}\par
+\vspace{1mm}
+{\small \textcolor{RGGray}{Report ID: \ReportID}}\par
+\vspace{6mm}
+
+\section*{Dati identificativi dell'incidente}
+
+\KVTable{
+Data & \DataIncidente \\
+Ora & \OraIncidente \\
+Robot (multi) & \Robot \\
+Scaffale & \Scaffale \\
+Cella & \Cella \\
+Zona & \Zona \\
+Luci robot & \LuciRobot \\
+Errore (opzionale) & \Errore \\
+Rimosso robot & \Rimosso \\
+Risoluzione (opzionale) & \Risoluzione \\
+}
+
+\vspace{5mm}
+
+\section*{Descrizione dell'incidente}
+\noindent \Descrizione
+
+\vspace{5mm}
+
+\section*{Documentazione (allegati)}
+\begin{itemize}
+\setlength{\itemsep}{2pt}
+\AllegatiList
+\end{itemize}
+
+\end{document}

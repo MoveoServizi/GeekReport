@@ -1,0 +1,11 @@
+{
+  "REPORT INCIDENTE": {
+    "required_fields": [
+      "data",
+      "robots",
+      "note"
+    ],
+    "subject": "REPORT INCIDENTE [robots] - [data]",
+    "body": "Buongiorno,\nQuesta è un'email automatica in seguito ad un evento di incidente all'interno del magazzino Geek.\n\nEVENTO\n\tData: [data]\n\tRobot coinvolti: [robots]\n\n\tDescrizione:\n\t[note]\n\nIn allegato i file.\n\nGrazie mille per l'attenzione.\nMoveo Servizi\n"
+  }
+}
