@@ -18,7 +18,7 @@ from report_incidente import report_incidente_bp
 
 
 def create_app() -> Flask:
-    app = Flask(__name__, static_folder="static", static_url_path="/Geekplus/static")
+    app = Flask(__name__, static_folder="static", static_url_path="/MedicairGeek/static")
     app.config["SECRET_KEY"] = "CHANGE_ME__report_medicair_secret"
     app.config["MAX_CONTENT_LENGTH"] = 300 * 1024 * 1024  # 300MB
 
