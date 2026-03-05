@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Report Intervento - In lavorazione</title>
+  <style>
+    :root{
+      --bg:#0b0f14;
+      --card:#0f1620;
+      --muted:#9fb0c0;
+      --text:#e8eef6;
+      --accent:#7cc4ff;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+    }
+    body{
+      margin:0;
+      min-height:100vh;
+      background:
+        radial-gradient(1200px 500px at 20% -10%, rgba(124,196,255,.18), transparent 60%),
+        var(--bg);
+      color:var(--text);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+    }
+    .wrap{ width:min(720px, 94vw); padding:16px; }
+
+    /* Logo: grande e "libero" (senza box) */
+    .top{
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      justify-content:center;
+      gap:10px;
+      margin-bottom:14px;
+      text-align:center;
+    }
+    .logo{
+      width:min(320px, 72vw);
+      height:auto;
+      object-fit:contain;
+      display:block;
+      filter: drop-shadow(0 18px 28px rgba(0,0,0,.55));
+    }
+
+    .card{
+      background: linear-gradient(180deg, rgba(255,255,255,.03), transparent 55%), var(--card);
+      border:1px solid rgba(255,255,255,.06);
+      border-radius:18px;
+      padding:18px 16px;
+      box-shadow: 0 14px 40px rgba(0,0,0,.45);
+      text-align:center;
+    }
+    h1{ font-size:18px; margin:0 0 6px; letter-spacing:.2px;}
+    p{ margin:0; color:var(--muted); font-size:14px; }
+    .btn{
+      display:inline-block;
+      margin-top:14px;
+      text-decoration:none;
+      padding:12px 16px;
+      border-radius:16px;
+      font-size:14px;
+      font-weight:850;
+      letter-spacing:.3px;
+      color:var(--text);
+      border: 1px solid rgba(124,196,255,.28);
+      background: linear-gradient(180deg, rgba(124,196,255,.28), rgba(124,196,255,.10));
+    }
+    .btn:active{ transform: translateY(1px); }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="top">
+      <img class="logo" src="{{ url_for('static', filename='img/LOGO.png') }}" alt="Logo">
+    </div>
+
+    <div class="card">
+      <h1>Report Intervento</h1>
+      <p>Pagina in lavorazione.</p>
+
+      <a class="btn" href="/MedicairGeek">Torna alla Home</a>
+    </div>
+  </div>
+</body>
+</html>

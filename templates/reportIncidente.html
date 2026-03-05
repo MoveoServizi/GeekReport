@@ -1,0 +1,485 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>{{ title }}</title>
+
+  <style>
+    :root{
+      --bg:#0b0f14;
+      --card:#0f1620;
+      --muted:#9fb0c0;
+      --text:#e8eef6;
+      --border:#223041;
+      --input:#0b1220;
+      --accent:#7cc4ff;
+      --danger:#ff6b6b;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+    }
+
+    body{
+      margin:0;
+      background:
+        radial-gradient(1200px 500px at 20% -10%, rgba(124,196,255,.18), transparent 60%),
+        radial-gradient(900px 500px at 110% 10%, rgba(255,107,107,.10), transparent 55%),
+        var(--bg);
+      color:var(--text);
+    }
+
+    .wrap{ max-width:720px; margin:0 auto; padding:14px; }
+
+    .card{
+      background: linear-gradient(180deg, rgba(255,255,255,.03), transparent 55%), var(--card);
+      border:1px solid rgba(255,255,255,.06);
+      border-radius:18px;
+      padding:14px;
+      box-shadow: 0 14px 40px rgba(0,0,0,.45);
+    }
+
+    .header{
+      display:flex;
+      align-items:center;
+      gap:12px;
+      padding:6px 2px 10px;
+    }
+
+    .logo{
+      width:64px; height:64px; border-radius:16px;
+      object-fit: contain;
+      background: rgba(255,255,255,.06);
+      border:1px solid rgba(255,255,255,.08);
+      padding:8px;
+    }
+
+    h1{ font-size:17px; margin:0; letter-spacing:.2px; }
+
+    .row{ display:grid; gap:12px; }
+
+    label{
+      font-size:13px; font-weight:700;
+      display:block; margin-bottom:6px; color: var(--text);
+    }
+
+    .req::after{ content:" *"; color:var(--danger); font-weight:900; }
+
+    input, select, textarea{
+      width:100%; box-sizing:border-box;
+      padding:12px; border-radius:14px;
+      border:1px solid rgba(255,255,255,.10);
+      font-size:16px;
+      background: rgba(11,18,32,.85);
+      color: var(--text);
+      outline:none;
+    }
+
+    input::placeholder, textarea::placeholder{ color: rgba(159,176,192,.75); }
+
+    textarea{ min-height:120px; resize:vertical; }
+    .smallta{ min-height:64px; }
+
+    .two{ display:grid; gap:12px; grid-template-columns: 1fr; }
+    .two-always{ display:grid; gap:12px; grid-template-columns: 1fr 1fr; }
+    @media (min-width: 560px){ .two{ grid-template-columns: 1fr 1fr; } }
+
+    .tag{ font-size:12px; color: var(--muted); margin-top:6px; }
+
+    .flash{
+      padding:10px 12px;
+      border-radius:14px;
+      background: rgba(255,107,107,.12);
+      border: 1px solid rgba(255,107,107,.28);
+      color: #ffd7d7;
+      margin-bottom: 10px;
+    }
+
+    .btn{
+      width:100%;
+      padding:14px;
+      border: 1px solid rgba(124,196,255,.28);
+      border-radius: 16px;
+      font-size: 16px;
+      font-weight: 850;
+      background: linear-gradient(180deg, rgba(124,196,255,.28), rgba(124,196,255,.10));
+      color: var(--text);
+      letter-spacing:.3px;
+    }
+    .btn:active{ transform: translateY(1px); }
+    .btn[disabled]{ opacity:.65; cursor:not-allowed; }
+
+    .divider{ height:1px; background: rgba(255,255,255,.08); margin: 10px 0; }
+
+    /* POPUP PROGRESS */
+    .modal-overlay{
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,.60);
+      backdrop-filter: blur(5px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+      padding: 18px;
+    }
+    .modal-card{
+      width: min(520px, 92vw);
+      background: linear-gradient(180deg, rgba(255,255,255,.04), transparent 60%), var(--card);
+      border: 1px solid rgba(255,255,255,.10);
+      border-radius: 18px;
+      box-shadow: 0 18px 60px rgba(0,0,0,.60);
+      padding: 16px;
+      text-align: center;
+    }
+    .modal-title{
+      margin: 0 0 10px;
+      font-size: 14px;
+      font-weight: 900;
+      letter-spacing: .2px;
+    }
+    .progress-bar{
+      width: 100%;
+      height: 12px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.08);
+      overflow: hidden;
+      border: 1px solid rgba(255,255,255,.10);
+    }
+    .progress-fill{
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, rgba(124,196,255,.95), rgba(74,222,128,.85));
+      transition: width .25s ease;
+    }
+    .progress-meta{
+      display:flex;
+      justify-content: space-between;
+      gap: 10px;
+      margin-top: 10px;
+      font-size: 12px;
+      color: var(--muted);
+    }
+    .modal-hint{
+      margin: 10px 0 0;
+      font-size: 12px;
+      color: var(--muted);
+      line-height: 1.35;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+    <div class="card">
+
+      <div class="header">
+        <img class="logo" src="{{ url_for('static', filename='img/CUBO.png') }}" alt="Logo">
+        <div>
+          <h1>{{ title }}</h1>
+        </div>
+      </div>
+
+      <div id="flashBox"></div>
+
+      <form id="reportForm" method="POST" enctype="multipart/form-data">
+        <div class="row">
+
+          <div class="two">
+            <div>
+              <label class="req">Data e ora</label>
+              <input type="datetime-local" name="dt_local" required value="{{ dt_local }}">
+            </div>
+          </div>
+
+          <div class="two">
+            <div>
+              <label class="req">Numero robot (multi)</label>
+              <select name="robots" multiple required size="6">
+                {% for r in robot_list %}
+                  <option value="{{ r }}">{{ r }}</option>
+                {% endfor %}
+              </select>
+              <div class="tag">Selezione multipla</div>
+            </div>
+
+            <div>
+              <label>Scaffale</label>
+              <input type="text" name="scaffale" value="senza scaffale" placeholder="es. A12 / senza scaffale">
+              <div class="tag">Es: A000001</div>
+            </div>
+          </div>
+
+          <div>
+            <label>Cella</label>
+            <input type="text" name="cella" placeholder="es. 1550015">
+          </div>
+
+          <div>
+            <label class="req">Zona</label>
+            <select name="zona" required>
+              <option value="" disabled selected>Seleziona…</option>
+              {% for z in zona_list %}
+                <option value="{{ z }}">{{ z }}</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <div class="divider"></div>
+
+          <div>
+            <label class="req">Luci robot</label>
+            <div class="two-always">
+              <div>
+                <select name="luci_c1" required>
+                  <option value="" disabled selected>Stato…</option>
+                  {% for l in luci_campo1 %}
+                    <option value="{{ l }}">{{ l }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+
+              <div>
+                <select name="luci_c2" required>
+                  <option value="" disabled selected>Colore…</option>
+                  {% for l in luci_campo2 %}
+                    <option value="{{ l }}">{{ l }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+            </div>
+            <div class="tag">Seleziona entrambi i campi.</div>
+          </div>
+
+          <div>
+            <label>Errore</label>
+            <textarea class="smallta" name="errore" rows="2" placeholder="Descrivi l’errore (2 righe)"></textarea>
+          </div>
+
+          <div>
+            <label class="req">Descrizione</label>
+            <textarea name="descrizione" required placeholder="Dettagli completi, cosa è successo, condizioni, azioni fatte…"></textarea>
+          </div>
+
+          <div class="two">
+            <div>
+              <label>Rimosso robot</label>
+              <select name="rimosso">
+                <option value="no" selected>No</option>
+                <option value="si">Sì</option>
+              </select>
+            </div>
+
+            <div>
+              <label>Risoluzione (opzionale)</label>
+              <input type="text" name="risoluzione" placeholder="es. riposizionato QR / riavvio / ecc.">
+            </div>
+          </div>
+
+          <div>
+            <label class="req">Carica foto o video</label>
+            <input type="file" name="media" accept="image/*,video/*" multiple required>
+            <div class="tag">Puoi selezionare più file.</div>
+          </div>
+
+          <button id="submitBtn" class="btn" type="submit">INVIA REPORT</button>
+
+        </div>
+      </form>
+
+    </div>
+  </div>
+
+  <!-- POPUP -->
+  <div id="progressModal" class="modal-overlay" aria-hidden="true">
+    <div class="modal-card" role="dialog" aria-live="polite" aria-busy="true">
+      <p class="modal-title" id="modalTitle">Invio report in corso…</p>
+
+      <div class="progress-bar">
+        <div class="progress-fill" id="modalFill"></div>
+      </div>
+
+      <div class="progress-meta">
+        <span id="modalPhase">Caricamento…</span>
+        <span id="modalPct">0%</span>
+      </div>
+
+      <p class="modal-hint" id="modalHint">Non chiudere questa pagina.</p>
+    </div>
+  </div>
+
+  <script>
+    (function(){
+      const form = document.getElementById("reportForm");
+      const btn  = document.getElementById("submitBtn");
+      const flashBox = document.getElementById("flashBox");
+
+      // popup elements
+      const modal = document.getElementById("progressModal");
+      const fill  = document.getElementById("modalFill");
+      const pctEl = document.getElementById("modalPct");
+      const phEl  = document.getElementById("modalPhase");
+      const hint  = document.getElementById("modalHint");
+      const title = document.getElementById("modalTitle");
+
+      let pollTimer = null;
+
+      function setFlashError(msgs){
+        flashBox.innerHTML = "";
+        const arr = Array.isArray(msgs) ? msgs : [String(msgs)];
+        for(const m of arr){
+          const d = document.createElement("div");
+          d.className = "flash";
+          d.textContent = m;
+          flashBox.appendChild(d);
+        }
+      }
+
+      function openModal(){
+        modal.style.display = "flex";
+        modal.setAttribute("aria-hidden","false");
+      }
+
+      function setProgress(p, phaseText){
+        const v = Math.max(0, Math.min(100, Number(p || 0)));
+        fill.style.width = v.toFixed(0) + "%";
+        pctEl.textContent = v.toFixed(0) + "%";
+        phEl.textContent = phaseText || "";
+      }
+
+      function stopPoll(){
+        if(pollTimer){
+          clearInterval(pollTimer);
+          pollTimer = null;
+        }
+      }
+
+      function mapBackendPhase(phase){
+        switch(phase){
+          case "UPLOAD_SAVING": return "Salvataggio allegati sul server…";
+          case "UPLOAD_SAVED":  return "Upload completato. Avvio elaborazione…";
+          case "EXCEL":         return "Scrittura registro Excel…";
+          case "PDF":           return "Generazione PDF…";
+          case "EMAIL":         return "Invio email…";
+          case "CLEANUP":       return "Pulizia file temporanei…";
+          case "DONE":          return "Completato.";
+          case "ERROR":         return "Errore.";
+          default:              return "Elaborazione…";
+        }
+      }
+
+      function pollStatus(jobId){
+        stopPoll();
+        pollTimer = setInterval(async () => {
+          try{
+            const res = await fetch(`/reportIncidente/status/${jobId}`, { cache: "no-store" });
+            const data = await res.json();
+
+            if(!data.ok){
+              stopPoll();
+              title.textContent = "Errore ❌";
+              hint.textContent = data.error || "Job non trovato.";
+              btn.disabled = false;
+              btn.textContent = "INVIA REPORT";
+              return;
+            }
+
+            const job = data.job || {};
+            const phase = mapBackendPhase(job.phase);
+            const percent = job.percent ?? 0;
+
+            setProgress(percent, phase);
+
+            if(job.message){
+              hint.textContent = job.message;
+            }
+
+            if(job.done){
+              stopPoll();
+              if(job.phase === "DONE"){
+                // redirect pagina di successo (server render) con dati del job
+                window.location.href = `/reportIncidente/success/${jobId}`;
+                return;
+              }
+
+              title.textContent = "Errore ❌";
+              hint.textContent = job.error || "Errore durante l'elaborazione.";
+              btn.disabled = false;
+              btn.textContent = "INVIA REPORT";
+            }
+          }catch(e){
+            // tolleriamo glitch temporanei
+          }
+        }, 700);
+      }
+
+      form.addEventListener("submit", function(ev){
+        ev.preventDefault();
+        flashBox.innerHTML = "";
+
+        btn.disabled = true;
+        btn.textContent = "INVIO IN CORSO…";
+
+        title.textContent = "Invio report in corso…";
+        hint.textContent = "Caricamento in corso…";
+        setProgress(0, "Caricamento allegati…");
+        openModal();
+
+        const xhr = new XMLHttpRequest();
+        xhr.open("POST", "/reportIncidente/start", true);
+
+        // upload progress reale 0..30%
+        xhr.upload.onprogress = function(e){
+          if(e.lengthComputable){
+            const pct = (e.loaded / e.total) * 30;
+            setProgress(pct, "Caricamento allegati…");
+            hint.textContent = `Upload: ${(e.loaded/1024/1024).toFixed(1)} / ${(e.total/1024/1024).toFixed(1)} MB`;
+          }
+        };
+
+        xhr.onload = function(){
+          if(xhr.status >= 200 && xhr.status < 300){
+            let data = null;
+            try{ data = JSON.parse(xhr.responseText); }catch(e){}
+
+            if(!data || !data.ok || !data.job_id){
+              title.textContent = "Errore ❌";
+              hint.textContent = "Risposta non valida dal server.";
+              btn.disabled = false;
+              btn.textContent = "INVIA REPORT";
+              return;
+            }
+
+            setProgress(35, "Upload completato. Avvio elaborazione…");
+            hint.textContent = "Elaborazione server in corso…";
+            pollStatus(data.job_id);
+            return;
+          }
+
+          // errori validazione backend (400) con lista errors
+          title.textContent = "Errore ❌";
+          try{
+            const data = JSON.parse(xhr.responseText);
+            hint.textContent = (data.errors && data.errors.length)
+              ? data.errors.join(" | ")
+              : "Errore durante l'invio.";
+          }catch(e){
+            hint.textContent = "Errore durante l'invio.";
+          }
+
+          btn.disabled = false;
+          btn.textContent = "INVIA REPORT";
+        };
+
+        xhr.onerror = function(){
+          title.textContent = "Errore ❌";
+          hint.textContent = "Errore di rete durante l'invio.";
+          btn.disabled = false;
+          btn.textContent = "INVIA REPORT";
+        };
+
+        const fd = new FormData(form);
+        xhr.send(fd);
+      });
+    })();
+  </script>
+</body>
+</html>
