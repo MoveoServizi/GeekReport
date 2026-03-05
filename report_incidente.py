@@ -342,7 +342,7 @@ def _run_job(job_id: str, payload: Dict[str, Any]) -> None:
 report_incidente_bp = Blueprint("report_incidente", __name__)
 
 
-@report_incidente_bp.get("/reportIncidente")
+@report_incidente_bp.get("/MedicairGeek/reportIncidente")
 def report_form():
     _jobs_gc()
     now = datetime.now()
@@ -358,7 +358,7 @@ def report_form():
     )
 
 
-@report_incidente_bp.post("/reportIncidente/start")
+@report_incidente_bp.post("/MedicairGeek/reportIncidente/start")
 def start_job():
     """
     Riceve form + file (multipart), salva gli upload nella cartella report,
@@ -496,7 +496,7 @@ def start_job():
     return jsonify({"ok": True, "job_id": job_id}), 200
 
 
-@report_incidente_bp.get("/reportIncidente/status/<job_id>")
+@report_incidente_bp.get("/MedicairGeek/reportIncidente/status/<job_id>")
 def job_status(job_id: str):
     _jobs_gc()
     job = _job_get(job_id)
@@ -504,7 +504,7 @@ def job_status(job_id: str):
         return jsonify({"ok": False, "error": "Job non trovato o scaduto."}), 404
     return jsonify({"ok": True, "job": job}), 200
 
-@report_incidente_bp.get("/reportIncidente/success/<job_id>")
+@report_incidente_bp.get("/MedicairGeek/reportIncidente/success/<job_id>")
 def job_success(job_id: str):
     _jobs_gc()
     job = _job_get(job_id)

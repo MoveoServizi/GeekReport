@@ -370,7 +370,7 @@
         stopPoll();
         pollTimer = setInterval(async () => {
           try{
-            const res = await fetch(`/reportIncidente/status/${jobId}`, { cache: "no-store" });
+            const res = await fetch(`/MedicairGeek/reportIncidente/status/${jobId}`, { cache: "no-store" });
             const data = await res.json();
 
             if(!data.ok){
@@ -396,7 +396,7 @@
               stopPoll();
               if(job.phase === "DONE"){
                 // redirect pagina di successo (server render) con dati del job
-                window.location.href = `/reportIncidente/success/${jobId}`;
+                window.location.href = `/MedicairGeek/reportIncidente/success/${jobId}`;
                 return;
               }
 
@@ -424,7 +424,7 @@
         openModal();
 
         const xhr = new XMLHttpRequest();
-        xhr.open("POST", "/reportIncidente/start", true);
+        xhr.open("POST", "/MedicairGeek/reportIncidente/start", true);
 
         // upload progress reale 0..30%
         xhr.upload.onprogress = function(e){

@@ -27,12 +27,13 @@ def create_app() -> Flask:
 
     # Home
     @app.get("/MedicairGeek")
+    @app.get("/MedicairGeek/")
     def home():
         # Template atteso: templates/home.html
         return render_template("home.html", title="MedicairGeek", now=datetime.now())
 
     # Report Intervento (placeholder)
-    @app.get("/reportIntervento")
+    @app.get("/MedicairGeek/reportIntervento")
     def report_intervento_form():
         # Template atteso: templates/reportIntervento.html
         # Quando lo implementerai, conviene spostare anche questo in un blueprint dedicato.
