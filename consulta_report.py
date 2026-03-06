@@ -5,8 +5,10 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 from config import REPORT_BASE_DIR
-from flask import Blueprint, jsonify, render_template, request, abort, send_from_directory
+from flask import Blueprint, jsonify, render_template, request, abort, send_from_directory,send_file
 from openpyxl import load_workbook
+import io
+import zipfile
 
 
 consulta_report_bp = Blueprint("consulta_report", __name__)
@@ -276,3 +278,35 @@ def serve_report_media(folder_name: str, filename: str):
 def storico_report_detail_page(report_id: int):
     # pagina dedicata (JS chiama l'API e renderizza)
     return render_template("reportDetail.html", title=f"Dettaglio Report #{report_id}", report_id=report_id)
+
+@consulta_report_bp.get("/MedicairGeek/ConsultaReport/download/<int:report_id>")
+def download_report_files(report_id: int):
+    report_root = REPORT_DIR  # già definita nel tuo backend
+
+    # Cerca la cartella che inizia con "<id>_"
+    matches = [p for p in report_root.iterdir() if p.is_dir() and p.name.startswith(f"{report_id}_")]
+    if not matches:
+        abort(404, description="Cartella report non trovata.")
+
+    folder = matches[0]
+
+    # Prende tutti i file della cartella
+    files = [p for p in folder.iterdir() if p.is_file()]
+    if not files:
+        abort(404, description="Nessun file presente nel report.")
+
+    memory_file = io.BytesIO()
+    with zipfile.ZipFile(memory_file, "w", zipfile.ZIP_DEFLATED) as zf:
+        for file_path in files:
+            zf.write(file_path, arcname=file_path.name)
+
+    memory_file.seek(0)
+
+    return send_file(
+        memory_file,
+        mimetype="application/zip",
+        as_attachment=True,
+        download_name=f"report_{report_id}.zip",
+    )
+
+

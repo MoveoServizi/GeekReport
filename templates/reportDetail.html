@@ -165,6 +165,24 @@
       font-size:13px;
       text-align:center;
     }
+    .actions{
+        display:grid;
+        gap:10px;
+        margin-top:14px;
+    }
+    a.btn{
+        display:block;
+        text-align:center;
+        text-decoration:none;
+        padding:13px 14px;
+        border-radius:16px;
+        font-size:15px;
+        font-weight:900;
+        letter-spacing:.3px;
+        color:var(--text);
+        border: 1px solid rgba(124,196,255,.28);
+        background: linear-gradient(180deg, rgba(124,196,255,.28), rgba(124,196,255,.10));
+    }
   </style>
 </head>
 
@@ -175,7 +193,9 @@
         <img class="logo" src="{{ url_for('static', filename='img/LOGO.png') }}" alt="Logo">
         <h1>Dettaglio Report #{{ report_id }}</h1>
       </div>
-      <a class="btn" href="/MedicairGeek/storicoReport">← Storico</a>
+      <div class="actionsTop">
+        <a class="btn secondary" href="/MedicairGeek/storicoReport">← Storico</a>
+      </div>
     </div>
 
     <div class="card">
@@ -191,6 +211,12 @@
 
         <div class="sectionTitle">Allegati</div>
         <div class="box">
+          <div class="actions" style="margin-bottom:12px;">
+            <a class="btn" href="/MedicairGeek/ConsultaReport/download/{{ report_id }}">
+              Download tutti i file
+            </a>
+          </div>
+
           <div class="muted" id="attachMeta"></div>
           <div class="attachGrid" id="attachGrid"></div>
         </div>
@@ -213,12 +239,17 @@
 
     function esc(s){
       return String(s ?? "").replace(/[&<>"']/g, m => ({
-        "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"
+        "&":"&amp;",
+        "<":"&lt;",
+        ">":"&gt;",
+        '"':"&quot;",
+        "'":"&#039;"
       }[m]));
     }
 
     function renderKV(r){
       kvEl.innerHTML = "";
+
       const rows = [
         ["ID", r.id],
         ["Data", r.dt_label],
@@ -228,9 +259,10 @@
         ["Cella", r.cella || "—"],
         ["Luci", r.luci || "—"],
         ["Errore", r.errore || "—"],
-        ["Cartella", r.folder_name || "—"],
+        ["Cartella", r.folder_name || "—"]
       ];
-      for(const [k,v] of rows){
+
+      for (const [k, v] of rows) {
         const d = document.createElement("div");
         d.className = "box";
         d.innerHTML = `<b>${esc(k)}:</b> <span class="muted">${esc(v)}</span>`;
@@ -240,14 +272,16 @@
 
     function renderAttachments(att){
       attachGrid.innerHTML = "";
-      if(!att || !att.length){
+
+      if (!att || !att.length) {
         attachMeta.textContent = "Nessun allegato disponibile.";
         attachGrid.innerHTML = `<div class="empty">Nessun file trovato nella cartella report.</div>`;
         return;
       }
+
       attachMeta.textContent = `${att.length} file`;
 
-      for(const a of att){
+      for (const a of att) {
         const div = document.createElement("div");
         div.className = "attach";
 
@@ -256,25 +290,37 @@
         const kind = a.kind || "file";
 
         let body = "";
-        if(kind === "image"){
-          body = `<img class="previewImg" src="${url}" alt="${name}" loading="lazy">`;
-        }else if(kind === "video"){
-          body = `<video class="previewVid" src="${url}" controls preload="metadata"></video>`;
-        }else{
+
+        if (kind === "image") {
+          body = `
+            <a href="${url}" target="_blank" rel="noopener">
+              <img class="previewImg" src="${url}" alt="${name}" loading="lazy">
+            </a>
+          `;
+        } else if (kind === "video") {
+          body = `
+            <video class="previewVid" src="${url}" controls preload="metadata"></video>
+            <a class="fileLink" href="${url}" target="_blank" rel="noopener">Apri video</a>
+          `;
+        } else {
           body = `<a class="fileLink" href="${url}" target="_blank" rel="noopener">Apri file</a>`;
         }
 
-        div.innerHTML = `<p class="attachName">${name}</p>${body}`;
+        div.innerHTML = `
+          <p class="attachName">${name}</p>
+          ${body}
+        `;
+
         attachGrid.appendChild(div);
       }
     }
 
     (async function(){
-      try{
-        const res = await fetch(`/MedicairGeek/ConsultaReport/report/${reportId}`, { cache:"no-store" });
+      try {
+        const res = await fetch(`/MedicairGeek/ConsultaReport/report/${reportId}`, { cache: "no-store" });
         const data = await res.json();
 
-        if(!data.ok){
+        if (!data.ok) {
           loading.style.display = "none";
           errorBox.style.display = "block";
           return;
@@ -287,7 +333,7 @@
 
         loading.style.display = "none";
         content.style.display = "block";
-      }catch(e){
+      } catch (e) {
         loading.style.display = "none";
         errorBox.style.display = "block";
       }
