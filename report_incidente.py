@@ -28,7 +28,7 @@ from flask import Blueprint, jsonify, render_template, request,abort
 from openpyxl import Workbook, load_workbook
 from werkzeug.utils import secure_filename
 
-from email_config import DESTINATARI
+from config import DESTINATARI, REPORT_BASE_DIR
 from email_sender import EmailSender
 from modelli_latex import cleanup_latex_tmp, crea_report
 
@@ -40,7 +40,7 @@ from modelli_latex import cleanup_latex_tmp, crea_report
 APP_TITLE = "Report Medicair - Incidenti Robot"
 BASE_DIR = Path(__file__).resolve().parent
 
-REPORT_DIR = BASE_DIR / "report"
+REPORT_DIR = REPORT_BASE_DIR
 EXCEL_PATH = REPORT_DIR / "Incidenti_robot.xlsx"
 
 ALLOWED_EXT = {

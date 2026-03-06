@@ -4,7 +4,7 @@ from __future__ import annotations
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
-
+from config import REPORT_BASE_DIR
 from flask import Blueprint, jsonify, render_template, request, abort, send_from_directory
 from openpyxl import load_workbook
 
@@ -12,7 +12,7 @@ from openpyxl import load_workbook
 consulta_report_bp = Blueprint("consulta_report", __name__)
 
 BASE_DIR = Path(__file__).resolve().parent
-REPORT_DIR = BASE_DIR / "report"
+REPORT_DIR = REPORT_BASE_DIR
 EXCEL_PATH = REPORT_DIR / "Incidenti_robot.xlsx"
 
 # Estensioni media (coerenti con report_incidente.py)
