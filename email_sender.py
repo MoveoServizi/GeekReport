@@ -44,7 +44,8 @@ DEFAULT_TEMPLATES: Dict[str, Dict[str, Any]] = {
             "Robot coinvolti: [robots]\n\n"
             "Descrizione / Note:\n"
             "[note]\n\n"
-            "In allegato i file.\n\n"
+            "In allegato i file.\n"
+            "Consulta i report su https://api.moveoservizi.com/MedicairGeek/ \n\n"
             "Grazie mille per l'attenzione.\n"
             "Moveo Servizi\n"
         ),
