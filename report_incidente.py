@@ -46,11 +46,14 @@ EXCEL_PATH = REPORT_DIR / "Incidenti_robot.xlsx"
 ALLOWED_EXT = {
     "jpg", "jpeg", "png", "gif", "webp", "heic",
     "mp4", "mov", "m4v", "avi", "mkv", "webm",
+    "pdf", "doc", "docx", "xls", "xlsx",
 }
 
 ROBOT_LIST = [
-    "1216278", "1216279", "1216292", "1216294", "1216302", "1216306", "1216314",
+    "1216278", "1216279", "1216292", "1216294", "1216302", "1216306", "1216313", "1216314",
     "1216325", "1216337", "1216339", "1216340", "1216348", "1216349", "1216350",
+    "Pavimento","WorkingStation1","WorkingStation2","WorkingStation3","ChargingStation",
+    "Altro",
 ]
 
 ZONA_LIST = [
@@ -60,12 +63,13 @@ ZONA_LIST = [
     "Station 1",
     "Station 2",
     "station 3",
-    "ingresso Ws1",
-    "ingresso WS1/2",
+    "Manutenzione",
+    "Altro",
+    
 ]
 
-LUCI_CAMPO1 = ["Fisse", "Lampeggianti"]
-LUCI_CAMPO2 = ["bianca", "blu", "verde", "rossa", "gialla", "altro"]
+LUCI_CAMPO1 = ["Fisse", "Lampeggianti","Non applicabile"]
+LUCI_CAMPO2 = ["bianca", "rossa", "verde", "blu", "gialla","viola", "altro"]
 
 HEADERS = [
     "id", "data", "ora", "robot", "scaffale", "cella", "zona",
