@@ -11,6 +11,9 @@ import io
 import zipfile
 
 
+
+
+
 consulta_report_bp = Blueprint("consulta_report", __name__)
 
 BASE_DIR = Path(__file__).resolve().parent
@@ -279,21 +282,65 @@ def storico_report_detail_page(report_id: int):
     # pagina dedicata (JS chiama l'API e renderizza)
     return render_template("reportDetail.html", title=f"Dettaglio Report #{report_id}", report_id=report_id)
 
+## Download ##
+
+SYSTEM_FILENAMES = {"thumbs.db", "desktop.ini", ".ds_store"}
+
+ALLOWED_EXTENSIONS = {
+    # immagini
+    ".jpg", ".jpeg", ".png", ".gif", ".webp", ".heic", ".bmp", ".tiff",
+
+    # video
+    ".mp4", ".mov", ".m4v", ".avi", ".mkv", ".webm",
+
+    # pdf
+    ".pdf",
+
+    # microsoft word
+    ".doc", ".docx",
+
+    # microsoft excel
+    ".xls", ".xlsx", ".xlsm", ".csv",
+
+    # microsoft powerpoint
+    ".ppt", ".pptx",
+
+    # altri documenti utili
+    ".txt", ".rtf",
+}
+
 @consulta_report_bp.get("/MedicairGeek/ConsultaReport/download/<int:report_id>")
 def download_report_files(report_id: int):
-    report_root = REPORT_DIR  # già definita nel tuo backend
+    report_root = REPORT_DIR
 
-    # Cerca la cartella che inizia con "<id>_"
-    matches = [p for p in report_root.iterdir() if p.is_dir() and p.name.startswith(f"{report_id}_")]
+    if not report_root.exists() or not report_root.is_dir():
+        abort(500, description="Directory report non disponibile.")
+
+    matches = [
+        p for p in report_root.iterdir()
+        if p.is_dir() and p.name.startswith(f"{report_id}_")
+    ]
     if not matches:
         abort(404, description="Cartella report non trovata.")
 
+    matches.sort(key=lambda p: p.stat().st_mtime, reverse=True)
     folder = matches[0]
 
-    # Prende tutti i file della cartella
-    files = [p for p in folder.iterdir() if p.is_file()]
+    files = [
+        p for p in folder.iterdir()
+        if (
+            p.is_file()
+            and p.name.lower() not in SYSTEM_FILENAMES
+            and not p.name.startswith("~$")
+            and not p.name.startswith(".")
+            and p.suffix.lower() in ALLOWED_EXTENSIONS
+        )
+    ]
+
+    files.sort(key=lambda p: p.name.lower())
+
     if not files:
-        abort(404, description="Nessun file presente nel report.")
+        abort(404, description="Nessun file valido presente nel report.")
 
     memory_file = io.BytesIO()
     with zipfile.ZipFile(memory_file, "w", zipfile.ZIP_DEFLATED) as zf:
@@ -308,5 +355,4 @@ def download_report_files(report_id: int):
         as_attachment=True,
         download_name=f"report_{report_id}.zip",
     )
-
 

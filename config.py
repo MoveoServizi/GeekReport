@@ -3,7 +3,8 @@ from pathlib import Path
 
 DESTINATARI = [
     "michele.cecchi@moveoservizi.com",
-    "ufficioprogetti@moveoservizi.com",
+    "bp.moveo@gmail.com",
+    "direzione@moveoservizi.com",
 ]
 
 # alias opzionale
@@ -11,3 +12,4 @@ destinatari = DESTINATARI
 
 #PATH
 REPORT_BASE_DIR = Path(r"\\192.168.0.10\Ufficio_Tecnico\PROGETTI\CLIENTI\MEDICAIR\GEEK_VENTILO_1\MANUTENZIONE\REPORT_APP")
+LATEX_PATH = Path(r"C:\Users\Administrator\AppData\Local\Programs\MiKTeX\miktex\bin\x64")
