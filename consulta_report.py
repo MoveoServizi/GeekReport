@@ -59,9 +59,9 @@ def _categoria_to_css(categoria: str) -> str:
     if c == "incidente":
         return "incidente"
     if c == "problema software":
-        return "software"
+        return "problema software"
     if c == "problema hardware":
-        return "hardware"
+        return "problema hardware"
     return "altro"
 
 
