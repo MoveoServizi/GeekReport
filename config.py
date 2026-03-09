@@ -6,7 +6,7 @@ DESTINATARI = [
     "bp.moveo@gmail.com",
     "direzione@moveoservizi.com",
     "elena.pagani@medicair.it",
-    "luca.cozzi@medicair.it,"
+    "luca.cozzi@medicair.it",
 ]
 
 # alias opzionale
