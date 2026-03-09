@@ -28,7 +28,7 @@ REPORT_DIR = REPORT_BASE_DIR
 EXCEL_PATH = REPORT_DIR / "Incidenti_robot.xlsx"
 
 ALLOWED_EXT = {
-    "jpg", "jpeg", "png", "gif", "webp", "heic",
+    "jpg", "jpeg", "png", "gif", "webp", "heic", "bmp", "tiff",
     "mp4", "mov", "m4v", "avi", "mkv", "webm",
     "pdf", "doc", "docx", "xls", "xlsx",
 }
@@ -109,8 +109,8 @@ def _jobs_gc() -> None:
     to_delete = []
 
     with JOBS_LOCK:
-        for jid, j in JOBS.items():
-            created = j.get("created_ts", now)
+        for jid, job in JOBS.items():
+            created = job.get("created_ts", now)
             if now - created > JOB_TTL_SECONDS:
                 to_delete.append(jid)
 
@@ -402,6 +402,7 @@ def start_job():
     """
     Riceve form + file (multipart), salva gli upload nella cartella report,
     crea job e avvia thread worker.
+    Gli allegati sono facoltativi.
     """
     _jobs_gc()
     ensure_report_assets()
@@ -422,6 +423,10 @@ def start_job():
     rimosso = normalize_spaces(request.form.get("rimosso", "no")).lower()
     risoluzione = normalize_spaces(request.form.get("risoluzione", ""))
 
+    # Allegati facoltativi, ma vanno comunque letti
+    files = request.files.getlist("media")
+
+    # ---- validation
     errors: list[str] = []
 
     if not dt_local:
@@ -465,22 +470,23 @@ def start_job():
     if rimosso not in ("si", "no"):
         rimosso = "no"
 
-    
-
     if errors:
         return jsonify({"ok": False, "errors": errors}), 400
 
+    # ---- dt parse
     try:
         dt = datetime.strptime(dt_local, "%Y-%m-%dT%H:%M")
     except Exception:
         return jsonify({"ok": False, "errors": ["Formato data/ora non valido."]}), 400
 
+    # ---- create IDs + folder
     next_id = get_next_id()
     folder_stamp = dt.strftime("%d-%m-%Y_%H-%M")
     folder_name = f"{next_id}_{folder_stamp}"
     folder_path = REPORT_DIR / folder_name
     folder_path.mkdir(parents=True, exist_ok=True)
 
+    # ---- create job
     job_id = uuid.uuid4().hex
     with JOBS_LOCK:
         JOBS[job_id] = {
@@ -494,7 +500,9 @@ def start_job():
             "result": None,
         }
 
+    # ---- save uploads (facoltativi)
     saved_file_paths: list[Path] = []
+
     for f in files:
         if not f or not f.filename:
             continue
@@ -514,21 +522,9 @@ def start_job():
         f.save(dest)
         saved_file_paths.append(dest)
 
-    if not saved_file_paths:
-        _job_set(
-            job_id,
-            phase="ERROR",
-            done=True,
-            error="Nessun allegato valido salvato.",
-            percent=100,
-        )
-        return jsonify(
-            {"ok": False, "errors": ["Nessun allegato valido (estensione non supportata)."]},
-            400,
-        )
-
     luci_robot = f"{luci_c1} - {luci_c2}".strip()
 
+    # ---- prepare payload for worker
     payload = {
         "dt": dt,
         "dt_local": dt_local,
@@ -556,6 +552,7 @@ def start_job():
         message="Upload completato. Avvio elaborazione…",
     )
 
+    # ---- start worker thread
     t = threading.Thread(target=_run_job, args=(job_id, payload), daemon=True)
     t.start()
 
