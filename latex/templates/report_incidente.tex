@@ -1,5 +1,8 @@
 % latex/templates/report_incidente.tex
 % Modello LaTeX per Report Incidente (Report Geek)
+% - Header fisso: REPORT INCIDENTE
+% - Titolo pagina: campo Titolo
+% - Sottotitolo: campo Categoria
 % - Logo: img/LOGO.png (copiato nella cartella di compilazione)
 % - AllegatiList: generata dal Python in formato \FileItem{...}
 
@@ -33,10 +36,11 @@
 \newcommand{\FileItem}[1]{\item \texttt{\detokenize{#1}}}
 
 % ---- Dati (placeholder compilati dal Python) ----
-% Nota: le graffe esterne sono IMPORTANTI per evitare errori \newcommand...
 \newcommand{\ReportID}{ {{{ReportID}}} }
 \newcommand{\DataIncidente}{ {{{DataIncidente}}} }
 \newcommand{\OraIncidente}{ {{{OraIncidente}}} }
+\newcommand{\Categoria}{ {{{Categoria}}} }
+\newcommand{\Titolo}{ {{{Titolo}}} }
 \newcommand{\Robot}{ {{{Robot}}} }
 \newcommand{\Scaffale}{ {{{Scaffale}}} }
 \newcommand{\Cella}{ {{{Cella}}} }
@@ -55,9 +59,9 @@
 
 % ---- Header / Footer ----
 \pagestyle{fancy}
-\fancyhf{} % clear
+\fancyhf{}
 
-% Header: logo a sinistra + titolo a destra
+% Header: logo a sinistra + testo fisso a destra
 \fancyhead[L]{%
   \raisebox{-0.25\height}{\includegraphics[height=20mm]{img/LOGO.png}}%
 }
@@ -65,7 +69,7 @@
 \renewcommand{\headrulewidth}{0pt}
 \renewcommand{\footrulewidth}{0pt}
 
-% Footer: due minipage + pagina al centro
+% Footer
 \fancyfoot[L]{%
   \raisebox{3mm}{%
     \begin{minipage}[t]{0.42\textwidth}\raggedright\footnotesize\textcolor{RGGray}{%
@@ -105,8 +109,11 @@
 
 \begin{document}
 
-{\LARGE \textbf{REPORT PER INCIDENTE}}\par
-\vspace{1mm}
+% ---- Titolo pagina dinamico ----
+{\LARGE \textbf{\Titolo}}\par
+\vspace{1.5mm}
+{\large \textcolor{RGGray}{\Categoria}}\par
+\vspace{1.5mm}
 {\small \textcolor{RGGray}{Report ID: \ReportID}}\par
 \vspace{6mm}
 

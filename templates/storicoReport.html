@@ -3,389 +3,372 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>{{ title }}</title>
+  <title>{{ title or "Storico Report" }}</title>
+
   <style>
     :root{
       --bg:#0b0f14;
       --card:#0f1620;
-      --muted:#9fb0c0;
       --text:#e8eef6;
-      --border:rgba(255,255,255,.10);
+      --muted:#9fb0c0;
+      --border:rgba(255,255,255,.08);
       --accent:#7cc4ff;
-      --accent2:#62e6a5;
+
+      --cat-incidente:#2ecc71;
+      --cat-software:#9b59ff;
+      --cat-hardware:#ff5a5a;
+      --cat-altro:#4da3ff;
+
       font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
     }
+
+    *{ box-sizing:border-box; }
+
     body{
       margin:0;
-      min-height:100vh;
       background:
         radial-gradient(1200px 500px at 20% -10%, rgba(124,196,255,.18), transparent 60%),
-        radial-gradient(900px 500px at 110% 10%, rgba(98,230,165,.12), transparent 55%),
+        radial-gradient(900px 500px at 110% 10%, rgba(77,163,255,.10), transparent 55%),
         var(--bg);
       color:var(--text);
     }
-    .wrap{ width:min(920px, 94vw); margin:0 auto; padding:14px 14px 26px; }
+
+    .wrap{
+      width:min(860px, 94vw);
+      margin:0 auto;
+      padding:16px 14px 26px;
+    }
 
     .top{
       display:flex;
-      flex-direction:column;
       align-items:center;
-      gap:10px;
-      margin: 6px 0 14px;
-      text-align:center;
+      gap:12px;
+      margin-bottom:14px;
     }
+
     .logo{
-      width:min(320px, 72vw);
-      height:auto;
+      width:56px;
+      height:56px;
+      border-radius:14px;
       object-fit:contain;
-      display:block;
-      filter: drop-shadow(0 18px 28px rgba(0,0,0,.55));
+      background:rgba(255,255,255,.05);
+      border:1px solid rgba(255,255,255,.08);
+      padding:6px;
+      flex:0 0 auto;
     }
-    h1{ margin:0; font-size:18px; letter-spacing:.2px; }
-    .hint{ margin:0; color:var(--muted); font-size:13px; }
+
+    h1{
+      margin:0;
+      font-size:20px;
+      letter-spacing:.2px;
+    }
+
+    .sub{
+      margin:3px 0 0;
+      font-size:13px;
+      color:var(--muted);
+    }
 
     .card{
-      background: linear-gradient(180deg, rgba(255,255,255,.03), transparent 55%), var(--card);
+      background:linear-gradient(180deg, rgba(255,255,255,.03), transparent 55%), var(--card);
       border:1px solid var(--border);
       border-radius:18px;
       padding:14px;
-      box-shadow: 0 14px 40px rgba(0,0,0,.45);
+      box-shadow:0 14px 40px rgba(0,0,0,.45);
     }
 
-    .controls{
+    .filters{
       display:grid;
-      gap:10px;
-      margin-bottom: 12px;
-    }
-    .row2{
-      display:grid;
-      grid-template-columns: 1fr;
-      gap:10px;
-    }
-    @media (min-width: 560px){
-      .row2{ grid-template-columns: 1fr 220px; }
+      grid-template-columns:minmax(0, 1fr) auto auto;
+      gap:8px;
+      margin-bottom:14px;
+      align-items:center;
     }
 
-    input{
+    .search{
       width:100%;
-      box-sizing:border-box;
-      padding:12px;
-      border-radius:14px;
+      min-width:0;
+      padding:11px 12px;
+      border-radius:12px;
       border:1px solid rgba(255,255,255,.10);
-      background: rgba(11,18,32,.85);
-      color: var(--text);
+      background:rgba(11,18,32,.85);
+      color:var(--text);
+      font-size:14px;
       outline:none;
-      font-size:15px;
+    }
+
+    .search::placeholder{
+      color:rgba(159,176,192,.75);
     }
 
     .btn{
-      display:inline-block;
-      width:100%;
-      text-align:center;
-      text-decoration:none;
-      padding:12px 14px;
-      border-radius:16px;
-      font-size:14px;
-      font-weight:900;
-      letter-spacing:.3px;
+      padding:10px 12px;
+      min-height:40px;
+      border-radius:12px;
+      border:1px solid rgba(124,196,255,.24);
+      background:linear-gradient(180deg, rgba(124,196,255,.22), rgba(124,196,255,.08));
       color:var(--text);
-      border: 1px solid rgba(124,196,255,.28);
-      background: linear-gradient(180deg, rgba(124,196,255,.28), rgba(124,196,255,.10));
+      font-size:13px;
+      font-weight:800;
+      letter-spacing:.2px;
       cursor:pointer;
+      white-space:nowrap;
     }
+
     .btn.secondary{
-      border: 1px solid rgba(255,255,255,.14);
-      background: linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.03));
-      color: var(--muted);
-      font-weight:850;
-    }
-
-    .topActions{
-    display:flex;
-    gap:14px;
-    justify-content:center;
-    align-items:center;
-    width:100%;
-    max-width:780px;
-    margin:18px auto 0;
-    }
-
-    .topActions .btn{
-    flex:1 1 0;
-    min-width:0;
-    height:50px;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    padding:0 24px;
-    border-radius:24px;
-    text-decoration:none;
-    border:1px solid rgba(124,196,255,.24);
-    background:linear-gradient(180deg, rgba(124,196,255,.20), rgba(124,196,255,.08));
-    color:#fff;
-    font-size:16px;
-    font-weight:800;
-    box-sizing:border-box;
-    white-space:nowrap;
-    }
-
-    .topActions .btn.secondary{
-    background:linear-gradient(180deg, rgba(124,196,255,.16), rgba(124,196,255,.06));
-    }
-
-    .topActions button.btn{
-    appearance:none;
-    -webkit-appearance:none;
-    cursor:pointer;
-    }
-
-    @media (max-width: 700px){
-    .topActions{
-        flex-direction:column;
-        max-width:100%;
-    }
-
-    .topActions .btn{
-        width:100%;
-        flex:none;
-    }
+      border:1px solid rgba(255,255,255,.10);
+      background:linear-gradient(180deg, rgba(255,255,255,.07), rgba(255,255,255,.03));
+      color:var(--muted);
     }
 
     .list{
       display:grid;
-      gap:10px;
-    }
-
-    .item{
-      border:1px solid rgba(255,255,255,.10);
-      background: rgba(255,255,255,.03);
-      border-radius:16px;
-      padding:12px;
-      cursor:pointer;
-      transition: transform .06s ease, border-color .12s ease;
-      display:flex;
       gap:12px;
-      align-items:flex-start;
-      justify-content:space-between;
     }
-    .item:hover{ border-color: rgba(124,196,255,.22); }
-    .item:active{ transform: translateY(1px); }
 
-    .itemLeft{ min-width:0; flex: 1 1 auto; }
-    .itemRight{ flex: 0 0 auto; display:flex; align-items:center; gap:10px; }
+    .report-card{
+      display:block;
+      text-decoration:none;
+      color:inherit;
+      background:rgba(255,255,255,.03);
+      border:1px solid rgba(255,255,255,.06);
+      border-left:6px solid #999;
+      border-radius:14px;
+      padding:14px 14px 14px 16px;
+      transition:transform .14s ease, background .14s ease;
+    }
 
-    .pill{
-      display:inline-block;
+    .report-card:hover{
+      background:rgba(255,255,255,.055);
+      transform:translateY(-1px);
+    }
+
+    .cat-incidente{ border-left-color:var(--cat-incidente); }
+    .cat-software{ border-left-color:var(--cat-software); }
+    .cat-hardware{ border-left-color:var(--cat-hardware); }
+    .cat-altro{ border-left-color:var(--cat-altro); }
+
+    .report-date{
+      font-size:17px;
+      font-weight:900;
+      line-height:1.2;
+      margin-bottom:5px;
+      word-break:break-word;
+    }
+
+    .report-title{
+      font-size:15px;
+      font-weight:800;
+      line-height:1.3;
+      margin-bottom:7px;
+      word-break:break-word;
+    }
+
+    .report-meta{
+      display:flex;
+      flex-wrap:wrap;
+      gap:10px;
+      margin-bottom:6px;
       font-size:12px;
-      padding:6px 10px;
-      border-radius:999px;
-      border:1px solid rgba(124,196,255,.25);
-      background: rgba(124,196,255,.10);
-      color: var(--text);
-      font-weight:850;
-      white-space:nowrap;
-    }
-    .pill.ok{
-      border:1px solid rgba(98,230,165,.25);
-      background: rgba(98,230,165,.10);
+      color:var(--muted);
     }
 
-    .meta{
-      color: var(--muted);
-      font-size:12px;
-      line-height:1.25;
-      margin-top:8px;
-    }
-
-    /* note max 2 righe + ... */
-    .preview{
-      margin-top:8px;
+    .report-text{
       font-size:13px;
-      color: rgba(232,238,246,.92);
+      color:var(--muted);
+      line-height:1.4;
+      word-break:break-word;
       display:-webkit-box;
-      -webkit-line-clamp: 2;
-      -webkit-box-orient: vertical;
+      -webkit-line-clamp:2;
+      -webkit-box-orient:vertical;
       overflow:hidden;
     }
 
-    .chev{
-      color: rgba(232,238,246,.55);
-      font-weight: 900;
-      font-size: 18px;
-      line-height: 1;
-      margin-top: 4px;
-      user-select:none;
-    }
-
     .empty{
-      padding:12px;
+      padding:18px;
       border-radius:14px;
-      border:1px dashed rgba(255,255,255,.18);
-      color: var(--muted);
-      background: rgba(255,255,255,.02);
-      font-size:13px;
+      border:1px dashed rgba(255,255,255,.12);
+      color:var(--muted);
       text-align:center;
+      font-size:14px;
     }
 
-    .smallNote{
-      margin-top:10px;
-      color: rgba(159,176,192,.85);
-      font-size: 12px;
+    .loading{
+      padding:18px;
+      border-radius:14px;
+      border:1px dashed rgba(255,255,255,.12);
+      color:var(--muted);
       text-align:center;
+      font-size:14px;
+    }
+
+    .error{
+      padding:12px 14px;
+      border-radius:14px;
+      background:rgba(255,107,107,.12);
+      border:1px solid rgba(255,107,107,.28);
+      color:#ffd7d7;
+      font-size:13px;
     }
   </style>
 </head>
 <body>
   <div class="wrap">
+
     <div class="top">
       <img class="logo" src="{{ url_for('static', filename='img/LOGO.png') }}" alt="Logo">
-      <h1>Storico Report</h1>
-      <p class="hint">Cerca e apri i report salvati (Excel + allegati).</p>
-
-      <div class="topActions">
-        <a class="btn secondary" href="/MedicairGeek/">← Home</a>
-        <button class="btn" id="btnReload" type="button">Aggiorna</button>
-        </div>
+      <div>
+        <h1>Storico Report</h1>
+        <p class="sub">Elenco report ordinati dal più recente al meno recente</p>
+      </div>
     </div>
 
     <div class="card">
-      <div class="controls">
-        <div class="row2">
-          <input id="q" type="text" placeholder="Cerca: robot, zona, errore, note…">
-          <button id="btnSearch" class="btn" type="button">Cerca</button>
-        </div>
-
-        <div class="row2">
-          <input id="robot" type="text" placeholder="Filtro robot (es. 16278)">
-          <button id="btnReset" class="btn secondary" type="button">Reset</button>
-        </div>
+      <div class="filters">
+        <input
+          id="searchInput"
+          class="search"
+          type="text"
+          placeholder="Cerca per titolo, categoria, robot o testo..."
+        >
+        <button id="btnSearch" class="btn" type="button">Cerca</button>
+        <button id="btnReset" class="btn secondary" type="button">Reset</button>
       </div>
 
-      <div id="list" class="list"></div>
-      <div id="listEmpty" class="empty" style="display:none;">Nessun report trovato.</div>
-
-      <div class="smallNote">Suggerimento: usa il filtro robot per trovare subito un ID specifico.</div>
+      <div id="errorBox" style="display:none;"></div>
+      <div id="content">
+        <div id="loading" class="loading">Caricamento report…</div>
+        <div id="list" class="list" style="display:none;"></div>
+        <div id="empty" class="empty" style="display:none;">Nessun report trovato.</div>
+      </div>
     </div>
+
   </div>
 
   <script>
-    const listEl = document.getElementById("list");
-    const listEmptyEl = document.getElementById("listEmpty");
+    (function(){
+      const searchInput = document.getElementById("searchInput");
+      const btnSearch = document.getElementById("btnSearch");
+      const btnReset = document.getElementById("btnReset");
 
-    const qEl = document.getElementById("q");
-    const robotEl = document.getElementById("robot");
-    const btnSearch = document.getElementById("btnSearch");
-    const btnReset = document.getElementById("btnReset");
-    const btnReload = document.getElementById("btnReload");
+      const errorBox = document.getElementById("errorBox");
+      const loadingEl = document.getElementById("loading");
+      const listEl = document.getElementById("list");
+      const emptyEl = document.getElementById("empty");
 
-    function esc(s){
-      return String(s ?? "").replace(/[&<>"']/g, m => ({
-        "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"
-      }[m]));
-    }
-
-    function setListLoading(){
-      listEl.innerHTML = `<div class="empty">Caricamento…</div>`;
-      listEmptyEl.style.display = "none";
-    }
-
-    function goDetail(id){
-      window.location.href = `/MedicairGeek/storicoReport/${id}`;
-    }
-
-    function renderList(items){
-      listEl.innerHTML = "";
-      if(!items || !items.length){
-        listEmptyEl.style.display = "block";
-        return;
+      function escapeHtml(value){
+        return String(value ?? "")
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;")
+          .replace(/'/g, "&#039;");
       }
-      listEmptyEl.style.display = "none";
 
-      for(const it of items){
-        const has = !!it.has_folder;
-        const pill = has
-          ? `<span class="pill ok">📎 Allegati</span>`
-          : `<span class="pill">Solo Excel</span>`;
+      function getCategoriaCss(cat){
+        const v = String(cat || "").trim().toLowerCase();
 
-        const div = document.createElement("div");
-        div.className = "item";
-        div.innerHTML = `
-          <div class="itemLeft">
-            ${pill}
-            <div class="meta">
-              <b>ID:</b> ${esc(it.id)}<br>
-              <b>Data:</b> ${esc(it.dt_label)}<br>
-              <b>Robot:</b> ${esc(it.robot)}
-            </div>
-            <div class="preview">${esc(it.note_preview || "")}</div>
-          </div>
-
-          <div class="itemRight">
-            <div class="chev">›</div>
-          </div>
-        `;
-
-        div.addEventListener("click", () => goDetail(it.id));
-        listEl.appendChild(div);
+        if(v === "incidente") return "cat-incidente";
+        if(v === "problema software") return "cat-software";
+        if(v === "problema hardware") return "cat-hardware";
+        return "cat-altro";
       }
-    }
 
-    async function loadList(){
-      setListLoading();
+      function setLoading(show){
+        loadingEl.style.display = show ? "block" : "none";
+      }
 
-      const q = (qEl.value || "").trim();
-      const robot = (robotEl.value || "").trim();
-
-      const params = new URLSearchParams();
-      if(q) params.set("q", q);
-      if(robot) params.set("robot", robot);
-      params.set("limit", "300");
-
-      try{
-        const res = await fetch(`/MedicairGeek/ConsultaReport/list?${params.toString()}`, { cache: "no-store" });
-        const data = await res.json();
-
-        if(!data.ok){
-          listEl.innerHTML = `<div class="empty">Errore nel caricamento lista.</div>`;
+      function setError(message){
+        if(!message){
+          errorBox.style.display = "none";
+          errorBox.innerHTML = "";
           return;
         }
 
-        renderList(data.reports || []);
-        // salva filtri (così se torni indietro li ritrovi)
-        localStorage.setItem("storico_q", q);
-        localStorage.setItem("storico_robot", robot);
-      }catch(e){
-        listEl.innerHTML = `<div class="empty">Errore di rete.</div>`;
+        errorBox.style.display = "block";
+        errorBox.innerHTML = `<div class="error">${escapeHtml(message)}</div>`;
       }
-    }
 
-    // Eventi
-    btnSearch.addEventListener("click", loadList);
+      function renderReports(reports){
+        listEl.innerHTML = "";
 
-    btnReset.addEventListener("click", () => {
-      qEl.value = "";
-      robotEl.value = "";
-      localStorage.removeItem("storico_q");
-      localStorage.removeItem("storico_robot");
-      loadList();
-    });
+        if(!reports || reports.length === 0){
+          listEl.style.display = "none";
+          emptyEl.style.display = "block";
+          return;
+        }
 
-    btnReload.addEventListener("click", loadList);
+        emptyEl.style.display = "none";
+        listEl.style.display = "grid";
 
-    // Invio con Enter
-    qEl.addEventListener("keydown", (e) => { if(e.key === "Enter") loadList(); });
-    robotEl.addEventListener("keydown", (e) => { if(e.key === "Enter") loadList(); });
+        const html = reports.map(r => {
+          const css = getCategoriaCss(r.categoria_css || r.categoria);
+          const dt = escapeHtml(r.dt_label || "");
+          const titolo = escapeHtml(r.titolo || "Senza titolo");
+          const id = escapeHtml(r.id || "");
+          const robot = escapeHtml(r.robot || "-");
+          const preview = escapeHtml(r.note_preview || "");
+          const href = `/MedicairGeek/storicoReport/${encodeURIComponent(r.id)}`;
 
-    // Ripristina filtri
-    (function restoreFilters(){
-      const q = localStorage.getItem("storico_q") || "";
-      const robot = localStorage.getItem("storico_robot") || "";
-      qEl.value = q;
-      robotEl.value = robot;
+          return `
+            <a class="report-card ${css}" href="${href}">
+              <div class="report-date">${dt}</div>
+              <div class="report-title">${titolo}</div>
+              <div class="report-meta">
+                <span>ID: #${id}</span>
+                <span>Robot: ${robot}</span>
+              </div>
+              <div class="report-text">${preview || "-"}</div>
+            </a>
+          `;
+        }).join("");
+
+        listEl.innerHTML = html;
+      }
+
+      async function loadReports(){
+        setError("");
+        setLoading(true);
+        listEl.style.display = "none";
+        emptyEl.style.display = "none";
+
+        try{
+          const q = searchInput.value.trim();
+          const url = new URL("/MedicairGeek/ConsultaReport/list", window.location.origin);
+          if(q) url.searchParams.set("q", q);
+          url.searchParams.set("limit", "300");
+
+          const res = await fetch(url.toString(), { cache: "no-store" });
+          const data = await res.json();
+
+          if(!res.ok || !data.ok){
+            throw new Error(data.error || "Errore nel caricamento dei report.");
+          }
+
+          renderReports(data.reports || []);
+        }catch(err){
+          setError(err.message || "Errore nel caricamento dei report.");
+        }finally{
+          setLoading(false);
+        }
+      }
+
+      btnSearch.addEventListener("click", loadReports);
+
+      btnReset.addEventListener("click", function(){
+        searchInput.value = "";
+        loadReports();
+      });
+
+      searchInput.addEventListener("keydown", function(ev){
+        if(ev.key === "Enter"){
+          ev.preventDefault();
+          loadReports();
+        }
+      });
+
+      loadReports();
     })();
-
-    // auto-load
-    loadList();
   </script>
 </body>
 </html>

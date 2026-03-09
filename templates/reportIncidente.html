@@ -1,7 +1,6 @@
 <!doctype html>
 <html lang="it">
 <head>
-  
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>{{ title }}</title>
@@ -16,8 +15,11 @@
       --input:#0b1220;
       --accent:#7cc4ff;
       --danger:#ff6b6b;
+      --warn:#ffd166;
       font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
     }
+
+    *{ box-sizing:border-box; }
 
     body{
       margin:0;
@@ -28,7 +30,11 @@
       color:var(--text);
     }
 
-    .wrap{ max-width:720px; margin:0 auto; padding:14px; }
+    .wrap{
+      max-width:720px;
+      margin:0 auto;
+      padding:14px;
+    }
 
     .card{
       background: linear-gradient(180deg, rgba(255,255,255,.03), transparent 55%), var(--card);
@@ -46,124 +52,207 @@
     }
 
     .logo{
-      width:64px; height:64px; border-radius:16px;
+      width:64px;
+      height:64px;
+      border-radius:16px;
       object-fit: contain;
       background: rgba(255,255,255,.06);
       border:1px solid rgba(255,255,255,.08);
       padding:8px;
+      flex:0 0 auto;
     }
 
-    h1{ font-size:17px; margin:0; letter-spacing:.2px; }
+    h1{
+      font-size:17px;
+      margin:0;
+      letter-spacing:.2px;
+    }
+
+    .sub{
+      margin:4px 0 0;
+      color:var(--muted);
+      font-size:13px;
+    }
 
     .row{ display:grid; gap:12px; }
 
-    label{
-      font-size:13px; font-weight:700;
-      display:block; margin-bottom:6px; color: var(--text);
+    .two{
+      display:grid;
+      gap:12px;
+      grid-template-columns:1fr;
     }
 
-    .req::after{ content:" *"; color:var(--danger); font-weight:900; }
+    .two-always{
+      display:grid;
+      gap:12px;
+      grid-template-columns:1fr 1fr;
+    }
+
+    @media (min-width:560px){
+      .two{ grid-template-columns:1fr 1fr; }
+    }
+
+    label{
+      font-size:13px;
+      font-weight:700;
+      display:block;
+      margin-bottom:6px;
+      color:var(--text);
+    }
+
+    .req::after{
+      content:" *";
+      color:var(--danger);
+      font-weight:900;
+    }
 
     input, select, textarea{
-      width:100%; box-sizing:border-box;
-      padding:12px; border-radius:14px;
+      width:100%;
+      box-sizing:border-box;
+      padding:12px;
+      border-radius:14px;
       border:1px solid rgba(255,255,255,.10);
       font-size:16px;
       background: rgba(11,18,32,.85);
-      color: var(--text);
+      color:var(--text);
       outline:none;
     }
 
-    input::placeholder, textarea::placeholder{ color: rgba(159,176,192,.75); }
+    input::placeholder, textarea::placeholder{
+      color: rgba(159,176,192,.75);
+    }
 
-    textarea{ min-height:120px; resize:vertical; }
-    .smallta{ min-height:64px; }
+    textarea{
+      min-height:120px;
+      resize:vertical;
+    }
 
-    .two{ display:grid; gap:12px; grid-template-columns: 1fr; }
-    .two-always{ display:grid; gap:12px; grid-template-columns: 1fr 1fr; }
-    @media (min-width: 560px){ .two{ grid-template-columns: 1fr 1fr; } }
+    .smallta{
+      min-height:64px;
+    }
 
-    .tag{ font-size:12px; color: var(--muted); margin-top:6px; }
+    .tag{
+      font-size:12px;
+      color:var(--muted);
+      margin-top:6px;
+    }
+
+    .warnbox{
+      padding:10px 12px;
+      border-radius:14px;
+      background:rgba(255,209,102,.08);
+      border:1px solid rgba(255,209,102,.24);
+      color:#ffe7a6;
+      font-size:13px;
+      line-height:1.4;
+    }
 
     .flash{
       padding:10px 12px;
       border-radius:14px;
       background: rgba(255,107,107,.12);
-      border: 1px solid rgba(255,107,107,.28);
-      color: #ffd7d7;
-      margin-bottom: 10px;
+      border:1px solid rgba(255,107,107,.28);
+      color:#ffd7d7;
+      margin-bottom:10px;
     }
 
     .btn{
       width:100%;
       padding:14px;
-      border: 1px solid rgba(124,196,255,.28);
-      border-radius: 16px;
-      font-size: 16px;
-      font-weight: 850;
+      border:1px solid rgba(124,196,255,.28);
+      border-radius:16px;
+      font-size:16px;
+      font-weight:850;
       background: linear-gradient(180deg, rgba(124,196,255,.28), rgba(124,196,255,.10));
-      color: var(--text);
+      color:var(--text);
       letter-spacing:.3px;
     }
-    .btn:active{ transform: translateY(1px); }
-    .btn[disabled]{ opacity:.65; cursor:not-allowed; }
 
-    .divider{ height:1px; background: rgba(255,255,255,.08); margin: 10px 0; }
+    .btn:active{ transform: translateY(1px); }
+
+    .btn[disabled]{
+      opacity:.65;
+      cursor:not-allowed;
+    }
+
+    .divider{
+      height:1px;
+      background: rgba(255,255,255,.08);
+      margin:10px 0;
+    }
+
+    .counter{
+      margin-top:6px;
+      font-size:12px;
+      color:var(--muted);
+      text-align:right;
+    }
+
+    .counter.over{
+      color:#ff9a9a;
+      font-weight:800;
+    }
 
     /* POPUP PROGRESS */
     .modal-overlay{
-      position: fixed;
-      inset: 0;
+      position:fixed;
+      inset:0;
       background: rgba(0,0,0,.60);
       backdrop-filter: blur(5px);
-      display: none;
-      align-items: center;
-      justify-content: center;
-      z-index: 9999;
-      padding: 18px;
+      display:none;
+      align-items:center;
+      justify-content:center;
+      z-index:9999;
+      padding:18px;
     }
+
     .modal-card{
-      width: min(520px, 92vw);
+      width:min(520px, 92vw);
       background: linear-gradient(180deg, rgba(255,255,255,.04), transparent 60%), var(--card);
-      border: 1px solid rgba(255,255,255,.10);
-      border-radius: 18px;
+      border:1px solid rgba(255,255,255,.10);
+      border-radius:18px;
       box-shadow: 0 18px 60px rgba(0,0,0,.60);
-      padding: 16px;
-      text-align: center;
+      padding:16px;
+      text-align:center;
     }
+
     .modal-title{
-      margin: 0 0 10px;
-      font-size: 14px;
-      font-weight: 900;
-      letter-spacing: .2px;
+      margin:0 0 10px;
+      font-size:14px;
+      font-weight:900;
+      letter-spacing:.2px;
     }
+
     .progress-bar{
-      width: 100%;
-      height: 12px;
-      border-radius: 999px;
+      width:100%;
+      height:12px;
+      border-radius:999px;
       background: rgba(255,255,255,.08);
-      overflow: hidden;
-      border: 1px solid rgba(255,255,255,.10);
+      overflow:hidden;
+      border:1px solid rgba(255,255,255,.10);
     }
+
     .progress-fill{
-      height: 100%;
-      width: 0%;
+      height:100%;
+      width:0%;
       background: linear-gradient(90deg, rgba(124,196,255,.95), rgba(74,222,128,.85));
       transition: width .25s ease;
     }
+
     .progress-meta{
       display:flex;
-      justify-content: space-between;
-      gap: 10px;
-      margin-top: 10px;
-      font-size: 12px;
-      color: var(--muted);
+      justify-content:space-between;
+      gap:10px;
+      margin-top:10px;
+      font-size:12px;
+      color:var(--muted);
     }
+
     .modal-hint{
-      margin: 10px 0 0;
-      font-size: 12px;
-      color: var(--muted);
-      line-height: 1.35;
+      margin:10px 0 0;
+      font-size:12px;
+      color:var(--muted);
+      line-height:1.35;
     }
   </style>
 </head>
@@ -176,6 +265,7 @@
         <img class="logo" src="{{ url_for('static', filename='img/CUBO.png') }}" alt="Logo">
         <div>
           <h1>{{ title }}</h1>
+          <p class="sub">Report Geek</p>
         </div>
       </div>
 
@@ -189,6 +279,29 @@
               <label class="req">Data e ora</label>
               <input type="datetime-local" name="dt_local" required value="{{ dt_local }}">
             </div>
+
+            <div>
+              <label class="req">Categoria</label>
+              <select name="categoria" required>
+                <option value="" disabled selected>Seleziona…</option>
+                {% for c in categorie_list %}
+                  <option value="{{ c }}">{{ c }}</option>
+                {% endfor %}
+              </select>
+            </div>
+          </div>
+
+          <div>
+            <label class="req">Titolo</label>
+            <input
+              type="text"
+              id="titolo"
+              name="titolo"
+              required
+              maxlength="{{ max_titolo_len }}"
+              placeholder="Max {{ max_titolo_len }} caratteri"
+            >
+            <div id="titoloCounter" class="counter">0 / {{ max_titolo_len }}</div>
           </div>
 
           <div class="two">
@@ -199,7 +312,7 @@
                   <option value="{{ r }}">{{ r }}</option>
                 {% endfor %}
               </select>
-              <div class="tag">Selezione multipla</div>
+              <div class="tag">Selezione multipla.</div>
             </div>
 
             <div>
@@ -252,7 +365,7 @@
 
           <div>
             <label>Errore</label>
-            <textarea class="smallta" name="errore" rows="2" placeholder="Descrivi l’errore (2 righe)"></textarea>
+            <textarea class="smallta" name="errore" rows="2" placeholder="Descrivi l’errore (breve)"></textarea>
           </div>
 
           <div>
@@ -270,15 +383,19 @@
             </div>
 
             <div>
-              <label>Risoluzione (opzionale)</label>
-              <input type="text" name="risoluzione" placeholder="es. riposizionato QR / riavvio / ecc.">
+              <label>Risoluzione</label>
+              <input type="text" name="risoluzione" placeholder="es. riavvio / reset / riposizionamento">
             </div>
           </div>
 
           <div>
-            <label class="req">Carica foto o video</label>
-            <input type="file" name="media" accept=".pdf,.doc,.docx,.xls,.xlsx,image/*,video/*" multiple required>
-            <div class="tag">Puoi selezionare più file.</div>
+            <label>Carica foto o video</label>
+            <input type="file" id="mediaInput" name="media" accept="image/*,video/*,.pdf,.doc,.docx,.xls,.xlsx" multiple>
+            <div class="tag">Facoltativo. Puoi selezionare più file.</div>
+          </div>
+
+          <div class="warnbox">
+            È consigliato allegare almeno una foto o un video per facilitare l’analisi del problema.
           </div>
 
           <button id="submitBtn" class="btn" type="submit">INVIA REPORT</button>
@@ -310,15 +427,18 @@
   <script>
     (function(){
       const form = document.getElementById("reportForm");
-      const btn  = document.getElementById("submitBtn");
+      const btn = document.getElementById("submitBtn");
       const flashBox = document.getElementById("flashBox");
 
-      // popup elements
+      const titoloInput = document.getElementById("titolo");
+      const titoloCounter = document.getElementById("titoloCounter");
+      const mediaInput = document.getElementById("mediaInput");
+
       const modal = document.getElementById("progressModal");
-      const fill  = document.getElementById("modalFill");
+      const fill = document.getElementById("modalFill");
       const pctEl = document.getElementById("modalPct");
-      const phEl  = document.getElementById("modalPhase");
-      const hint  = document.getElementById("modalHint");
+      const phEl = document.getElementById("modalPhase");
+      const hint = document.getElementById("modalHint");
       const title = document.getElementById("modalTitle");
 
       let pollTimer = null;
@@ -326,6 +446,7 @@
       function setFlashError(msgs){
         flashBox.innerHTML = "";
         const arr = Array.isArray(msgs) ? msgs : [String(msgs)];
+
         for(const m of arr){
           const d = document.createElement("div");
           d.className = "flash";
@@ -336,7 +457,7 @@
 
       function openModal(){
         modal.style.display = "flex";
-        modal.setAttribute("aria-hidden","false");
+        modal.setAttribute("aria-hidden", "false");
       }
 
       function setProgress(p, phaseText){
@@ -356,19 +477,27 @@
       function mapBackendPhase(phase){
         switch(phase){
           case "UPLOAD_SAVING": return "Salvataggio allegati sul server…";
-          case "UPLOAD_SAVED":  return "Upload completato. Avvio elaborazione…";
-          case "EXCEL":         return "Scrittura registro Excel…";
-          case "PDF":           return "Generazione PDF…";
-          case "EMAIL":         return "Invio email…";
-          case "CLEANUP":       return "Pulizia file temporanei…";
-          case "DONE":          return "Completato.";
-          case "ERROR":         return "Errore.";
-          default:              return "Elaborazione…";
+          case "UPLOAD_SAVED": return "Upload completato. Avvio elaborazione…";
+          case "EXCEL": return "Scrittura registro Excel…";
+          case "PDF": return "Generazione PDF…";
+          case "EMAIL": return "Invio email…";
+          case "CLEANUP": return "Pulizia file temporanei…";
+          case "DONE": return "Completato.";
+          case "ERROR": return "Errore.";
+          default: return "Elaborazione…";
         }
+      }
+
+      function updateTitoloCounter(){
+        const maxLen = Number(titoloInput.getAttribute("maxlength")) || 30;
+        const len = titoloInput.value.length;
+        titoloCounter.textContent = `${len} / ${maxLen}`;
+        titoloCounter.classList.toggle("over", len > maxLen);
       }
 
       function pollStatus(jobId){
         stopPoll();
+
         pollTimer = setInterval(async () => {
           try{
             const res = await fetch(`/MedicairGeek/reportIncidente/status/${jobId}`, { cache: "no-store" });
@@ -376,7 +505,7 @@
 
             if(!data.ok){
               stopPoll();
-              title.textContent = "Errore ❌";
+              title.textContent = "Errore";
               hint.textContent = data.error || "Job non trovato.";
               btn.disabled = false;
               btn.textContent = "INVIA REPORT";
@@ -395,13 +524,13 @@
 
             if(job.done){
               stopPoll();
+
               if(job.phase === "DONE"){
-                // redirect pagina di successo (server render) con dati del job
                 window.location.href = `/MedicairGeek/reportIncidente/success/${jobId}`;
                 return;
               }
 
-              title.textContent = "Errore ❌";
+              title.textContent = "Errore";
               hint.textContent = job.error || "Errore durante l'elaborazione.";
               btn.disabled = false;
               btn.textContent = "INVIA REPORT";
@@ -412,22 +541,35 @@
         }, 700);
       }
 
+      titoloInput.addEventListener("input", updateTitoloCounter);
+      updateTitoloCounter();
+
       form.addEventListener("submit", function(ev){
         ev.preventDefault();
         flashBox.innerHTML = "";
+
+        const hasFiles = mediaInput.files && mediaInput.files.length > 0;
+
+        if(!hasFiles){
+          const proceed = window.confirm(
+            "Non hai allegato foto o video.\n\nÈ consigliato inserire almeno un allegato per facilitare l'analisi del report.\n\nVuoi inviare comunque?"
+          );
+          if(!proceed){
+            return;
+          }
+        }
 
         btn.disabled = true;
         btn.textContent = "INVIO IN CORSO…";
 
         title.textContent = "Invio report in corso…";
-        hint.textContent = "Caricamento in corso…";
-        setProgress(0, "Caricamento allegati…");
+        hint.textContent = hasFiles ? "Caricamento in corso…" : "Avvio elaborazione…";
+        setProgress(0, hasFiles ? "Caricamento allegati…" : "Preparazione invio…");
         openModal();
 
         const xhr = new XMLHttpRequest();
         xhr.open("POST", "/MedicairGeek/reportIncidente/start", true);
 
-        // upload progress reale 0..30%
         xhr.upload.onprogress = function(e){
           if(e.lengthComputable){
             const pct = (e.loaded / e.total) * 30;
@@ -442,7 +584,7 @@
             try{ data = JSON.parse(xhr.responseText); }catch(e){}
 
             if(!data || !data.ok || !data.job_id){
-              title.textContent = "Errore ❌";
+              title.textContent = "Errore";
               hint.textContent = "Risposta non valida dal server.";
               btn.disabled = false;
               btn.textContent = "INVIA REPORT";
@@ -455,15 +597,17 @@
             return;
           }
 
-          // errori validazione backend (400) con lista errors
-          title.textContent = "Errore ❌";
+          title.textContent = "Errore";
+
           try{
             const data = JSON.parse(xhr.responseText);
             hint.textContent = (data.errors && data.errors.length)
               ? data.errors.join(" | ")
               : "Errore durante l'invio.";
+            setFlashError(data.errors || "Errore durante l'invio.");
           }catch(e){
             hint.textContent = "Errore durante l'invio.";
+            setFlashError("Errore durante l'invio.");
           }
 
           btn.disabled = false;
@@ -471,8 +615,9 @@
         };
 
         xhr.onerror = function(){
-          title.textContent = "Errore ❌";
+          title.textContent = "Errore";
           hint.textContent = "Errore di rete durante l'invio.";
+          setFlashError("Errore di rete durante l'invio.");
           btn.disabled = false;
           btn.textContent = "INVIA REPORT";
         };

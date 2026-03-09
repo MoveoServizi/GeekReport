@@ -1,17 +1,15 @@
-# consulta_report.py
 from __future__ import annotations
 
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
-from config import REPORT_BASE_DIR
-from flask import Blueprint, jsonify, render_template, request, abort, send_from_directory,send_file
-from openpyxl import load_workbook
 import io
 import zipfile
 
+from flask import Blueprint, jsonify, render_template, request, abort, send_from_directory, send_file
+from openpyxl import load_workbook
 
-
+from config import REPORT_BASE_DIR
 
 
 consulta_report_bp = Blueprint("consulta_report", __name__)
@@ -20,9 +18,21 @@ BASE_DIR = Path(__file__).resolve().parent
 REPORT_DIR = REPORT_BASE_DIR
 EXCEL_PATH = REPORT_DIR / "Incidenti_robot.xlsx"
 
-# Estensioni media (coerenti con report_incidente.py)
-IMG_EXT = {"jpg", "jpeg", "png", "gif", "webp", "heic"}
+# Estensioni media
+IMG_EXT = {"jpg", "jpeg", "png", "gif", "webp", "heic", "bmp", "tiff"}
 VID_EXT = {"mp4", "mov", "m4v", "avi", "mkv", "webm"}
+
+SYSTEM_FILENAMES = {"thumbs.db", "desktop.ini", ".ds_store"}
+
+ALLOWED_EXTENSIONS = {
+    ".jpg", ".jpeg", ".png", ".gif", ".webp", ".heic", ".bmp", ".tiff",
+    ".mp4", ".mov", ".m4v", ".avi", ".mkv", ".webm",
+    ".pdf",
+    ".doc", ".docx",
+    ".xls", ".xlsx", ".xlsm", ".csv",
+    ".ppt", ".pptx",
+    ".txt", ".rtf",
+}
 
 
 def _safe_exists_excel() -> bool:
@@ -35,26 +45,38 @@ def _normalize_str(v: Any) -> str:
     return str(v).strip()
 
 
-def _truncate_2lines(text: str, max_chars: int = 140) -> str:
-    t = (text or "").strip().replace("\r", "\n")
-    # “2 righe” lato UI è più affidabile via CSS, qui mettiamo solo un limite sensato per API.
+def _truncate_preview(text: str, max_chars: int = 160) -> str:
+    t = _normalize_str(text).replace("\r", "\n")
+    t = " ".join(t.split())
     if len(t) <= max_chars:
         return t
     return t[: max_chars - 1].rstrip() + "…"
 
 
+def _categoria_to_css(categoria: str) -> str:
+    c = _normalize_str(categoria).lower()
+
+    if c == "incidente":
+        return "incidente"
+    if c == "problema software":
+        return "software"
+    if c == "problema hardware":
+        return "hardware"
+    return "altro"
+
+
 def _find_folder_for_report_id(report_id: int) -> Optional[str]:
     """
-    Il report_id NON è salvato nell’Excel come folder_name.
     Convenzione cartelle: report/<id>_<dd-mm-YYYY_HH-MM>
-    Quindi cerchiamo la cartella che inizia con "{id}_".
-    Se ce ne sono più di una (rarissimo), scegliamo la più recente (mtime).
+    Cerchiamo la cartella che inizia con "{id}_".
+    Se ce ne sono più di una, scegliamo la più recente.
     """
     if not REPORT_DIR.exists():
         return None
 
     prefix = f"{report_id}_"
     candidates: List[Path] = []
+
     for p in REPORT_DIR.iterdir():
         if p.is_dir() and p.name.startswith(prefix):
             candidates.append(p)
@@ -72,12 +94,14 @@ def _list_attachments(folder_name: str) -> List[Dict[str, Any]]:
         return []
 
     out: List[Dict[str, Any]] = []
+
     for p in sorted(folder.iterdir(), key=lambda x: x.name.lower()):
         if not p.is_file():
             continue
 
         ext = p.suffix.lower().lstrip(".")
         kind = "file"
+
         if ext in IMG_EXT:
             kind = "image"
         elif ext in VID_EXT:
@@ -92,24 +116,25 @@ def _list_attachments(folder_name: str) -> List[Dict[str, Any]]:
                 "url": f"/MedicairGeek/ConsultaReport/media/{folder_name}/{p.name}",
             }
         )
+
     return out
 
 
 def _read_excel_rows(limit: int = 5000) -> List[Dict[str, Any]]:
     """
-    Legge l’Excel "Incidenti_robot.xlsx".
-    Header previsto (report_incidente.py): id,data,ora,robot,scaffale,cella,zona,luci robot,errore,note,rimosso,risoluzione
-    :contentReference[oaicite:1]{index=1}
+    Header atteso:
+    id, data, ora, Categoria, Titolo, robot, scaffale, cella, zona,
+    luci robot, errore, note, rimosso, risoluzione
     """
     if not _safe_exists_excel():
         return []
 
-    wb = load_workbook(EXCEL_PATH)
+    wb = load_workbook(EXCEL_PATH, data_only=True)
     ws = wb.active
 
     rows: List[Dict[str, Any]] = []
-    # riga 1 = header
-    for i, r in enumerate(ws.iter_rows(min_row=2, values_only=True), start=2):
+
+    for r in ws.iter_rows(min_row=2, values_only=True):
         if not r or r[0] is None:
             continue
 
@@ -120,13 +145,17 @@ def _read_excel_rows(limit: int = 5000) -> List[Dict[str, Any]]:
 
         data = _normalize_str(r[1])
         ora = _normalize_str(r[2])
-        robot = _normalize_str(r[3])
-        scaffale = _normalize_str(r[4])
-        cella = _normalize_str(r[5])
-        zona = _normalize_str(r[6])
-        luci = _normalize_str(r[7])
-        errore = _normalize_str(r[8])
-        note = _normalize_str(r[9])  # in realtà è la descrizione lunga
+        categoria = _normalize_str(r[3])
+        titolo = _normalize_str(r[4])
+        robot = _normalize_str(r[5])
+        scaffale = _normalize_str(r[6])
+        cella = _normalize_str(r[7])
+        zona = _normalize_str(r[8])
+        luci = _normalize_str(r[9])
+        errore = _normalize_str(r[10])
+        note = _normalize_str(r[11])
+        rimosso = _normalize_str(r[12])
+        risoluzione = _normalize_str(r[13])
 
         rows.append(
             {
@@ -134,6 +163,9 @@ def _read_excel_rows(limit: int = 5000) -> List[Dict[str, Any]]:
                 "data": data,
                 "ora": ora,
                 "dt_label": f"{data} {ora}".strip(),
+                "categoria": categoria,
+                "categoria_css": _categoria_to_css(categoria),
+                "titolo": titolo,
                 "robot": robot,
                 "scaffale": scaffale,
                 "cella": cella,
@@ -141,7 +173,9 @@ def _read_excel_rows(limit: int = 5000) -> List[Dict[str, Any]]:
                 "luci": luci,
                 "errore": errore,
                 "note": note,
-                "note_preview": _truncate_2lines(note),
+                "note_preview": _truncate_preview(note),
+                "rimosso": rimosso,
+                "risoluzione": risoluzione,
             }
         )
 
@@ -150,17 +184,20 @@ def _read_excel_rows(limit: int = 5000) -> List[Dict[str, Any]]:
 
     wb.close()
 
-    # Ordine: più recenti in alto (se data/ora non parseabili, fallback su id)
     def _sort_key(x: Dict[str, Any]) -> Tuple[int, str]:
-        # Provo a creare una data “ordinabile” dd/mm/YYYY + HH:MM
         try:
-            dt = datetime.strptime(f"{x.get('data','')} {x.get('ora','')}", "%d/%m/%Y %H:%M")
+            dt = datetime.strptime(f"{x.get('data', '')} {x.get('ora', '')}", "%d/%m/%Y %H:%M")
             return (0, dt.isoformat())
         except Exception:
-            return (1, f"{x.get('id',0):010d}")
+            return (1, f"{int(x.get('id', 0)):010d}")
 
     rows.sort(key=_sort_key, reverse=True)
     return rows
+
+
+def _get_report_by_id(report_id: int) -> Optional[Dict[str, Any]]:
+    rows = _read_excel_rows(limit=5000)
+    return next((r for r in rows if int(r.get("id", -1)) == int(report_id)), None)
 
 
 @consulta_report_bp.get("/MedicairGeek/storicoReport")
@@ -172,16 +209,20 @@ def storico_report_page():
 def api_list_reports():
     """
     Query params:
-    - q: ricerca testo (robot / note / zona / errore)
-    - robot: filtro robot (substring sul campo robot che può contenere più robot)
+    - q: ricerca testo
+    - robot: filtro robot
+    - categoria: filtro categoria
     - limit: default 300
     """
     q = (request.args.get("q", "") or "").strip().lower()
     robot_filter = (request.args.get("robot", "") or "").strip().lower()
+    categoria_filter = (request.args.get("categoria", "") or "").strip().lower()
+
     try:
         limit = int(request.args.get("limit", "300"))
     except Exception:
         limit = 300
+
     limit = max(1, min(2000, limit))
 
     rows = _read_excel_rows(limit=5000)
@@ -190,6 +231,8 @@ def api_list_reports():
         def match_q(x: Dict[str, Any]) -> bool:
             blob = " ".join(
                 [
+                    _normalize_str(x.get("titolo")),
+                    _normalize_str(x.get("categoria")),
                     _normalize_str(x.get("robot")),
                     _normalize_str(x.get("note")),
                     _normalize_str(x.get("zona")),
@@ -205,18 +248,29 @@ def api_list_reports():
     if robot_filter:
         rows = [r for r in rows if robot_filter in _normalize_str(r.get("robot")).lower()]
 
-    # aggiungo folder (se esiste) per indicare se ha allegati consultabili
+    if categoria_filter:
+        rows = [r for r in rows if categoria_filter == _normalize_str(r.get("categoria")).lower()]
+
     out: List[Dict[str, Any]] = []
+
     for r in rows[:limit]:
         folder = _find_folder_for_report_id(int(r["id"]))
+        attachments = _list_attachments(folder) if folder else []
+
         out.append(
             {
                 "id": r["id"],
+                "data": r["data"],
+                "ora": r["ora"],
                 "dt_label": r["dt_label"],
+                "titolo": r["titolo"],
+                "categoria": r["categoria"],
+                "categoria_css": r["categoria_css"],
                 "robot": r["robot"],
                 "note_preview": r["note_preview"],
                 "has_folder": bool(folder),
                 "folder_name": folder or "",
+                "attachments_count": len(attachments),
             }
         )
 
@@ -225,8 +279,7 @@ def api_list_reports():
 
 @consulta_report_bp.get("/MedicairGeek/ConsultaReport/report/<int:report_id>")
 def api_get_report(report_id: int):
-    rows = _read_excel_rows(limit=5000)
-    item = next((r for r in rows if int(r.get("id", -1)) == int(report_id)), None)
+    item = _get_report_by_id(report_id)
     if not item:
         return jsonify({"ok": False, "error": "Report non trovato."}), 404
 
@@ -241,6 +294,9 @@ def api_get_report(report_id: int):
                 "data": item["data"],
                 "ora": item["ora"],
                 "dt_label": item["dt_label"],
+                "titolo": item["titolo"],
+                "categoria": item["categoria"],
+                "categoria_css": item["categoria_css"],
                 "robot": item["robot"],
                 "scaffale": item["scaffale"],
                 "cella": item["cella"],
@@ -248,6 +304,8 @@ def api_get_report(report_id: int):
                 "luci": item["luci"],
                 "errore": item["errore"],
                 "note": item["note"],
+                "rimosso": item["rimosso"],
+                "risoluzione": item["risoluzione"],
                 "folder_name": folder or "",
                 "attachments": attachments,
             },
@@ -263,6 +321,7 @@ def serve_report_media(folder_name: str, filename: str):
     """
     base = REPORT_DIR.resolve()
     folder = (REPORT_DIR / folder_name).resolve()
+
     if base not in folder.parents and folder != base:
         abort(404)
 
@@ -275,39 +334,15 @@ def serve_report_media(folder_name: str, filename: str):
 
     return send_from_directory(directory=str(folder), path=filename, as_attachment=False)
 
-# dentro consulta_report.py
 
 @consulta_report_bp.get("/MedicairGeek/storicoReport/<int:report_id>")
 def storico_report_detail_page(report_id: int):
-    # pagina dedicata (JS chiama l'API e renderizza)
-    return render_template("reportDetail.html", title=f"Dettaglio Report #{report_id}", report_id=report_id)
+    return render_template(
+        "reportDetail.html",
+        title=f"Dettaglio Report #{report_id}",
+        report_id=report_id,
+    )
 
-## Download ##
-
-SYSTEM_FILENAMES = {"thumbs.db", "desktop.ini", ".ds_store"}
-
-ALLOWED_EXTENSIONS = {
-    # immagini
-    ".jpg", ".jpeg", ".png", ".gif", ".webp", ".heic", ".bmp", ".tiff",
-
-    # video
-    ".mp4", ".mov", ".m4v", ".avi", ".mkv", ".webm",
-
-    # pdf
-    ".pdf",
-
-    # microsoft word
-    ".doc", ".docx",
-
-    # microsoft excel
-    ".xls", ".xlsx", ".xlsm", ".csv",
-
-    # microsoft powerpoint
-    ".ppt", ".pptx",
-
-    # altri documenti utili
-    ".txt", ".rtf",
-}
 
 @consulta_report_bp.get("/MedicairGeek/ConsultaReport/download/<int:report_id>")
 def download_report_files(report_id: int):
@@ -355,4 +390,3 @@ def download_report_files(report_id: int):
         as_attachment=True,
         download_name=f"report_{report_id}.zip",
     )
-
