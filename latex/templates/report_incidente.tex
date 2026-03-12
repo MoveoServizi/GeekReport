@@ -51,6 +51,12 @@
 \newcommand{\Risoluzione}{ {{{Risoluzione}}} }
 \newcommand{\Descrizione}{ {{{Descrizione}}} }
 
+% ---- Update ----
+\newcommand{\DataUpdateOne}{ {{{DataUpdate1}}} }
+\newcommand{\UpdateOne}{ {{{Update1}}} }
+\newcommand{\DataUpdateTwo}{ {{{DataUpdate2}}} }
+\newcommand{\UpdateTwo}{ {{{Update2}}} }
+
 % AllegatiList viene passata dal Python come raw latex:
 % \FileItem{nome_file_con_underscore.png}
 \newcommand{\AllegatiList}{%
@@ -136,6 +142,22 @@ Risoluzione (opzionale) & \Risoluzione \\
 
 \section*{Descrizione dell'incidente}
 \noindent \Descrizione
+
+\vspace{5mm}
+
+\section*{Aggiornamenti}
+
+\noindent\textbf{Update 1}\par
+\textcolor{RGGray}{\DataUpdateOne}\par
+\vspace{1mm}
+\noindent \UpdateOne
+
+\vspace{4mm}
+
+\noindent\textbf{Update 2}\par
+\textcolor{RGGray}{\DataUpdateTwo}\par
+\vspace{1mm}
+\noindent \UpdateTwo
 
 \vspace{5mm}
 

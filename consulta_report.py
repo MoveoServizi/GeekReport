@@ -99,6 +99,10 @@ def _list_attachments(folder_name: str) -> List[Dict[str, Any]]:
         if not p.is_file():
             continue
 
+        # Evita file di sistema o temporanei
+        if p.name.lower() in SYSTEM_FILENAMES or p.name.startswith("~$") or p.name.startswith("."):
+            continue
+
         ext = p.suffix.lower().lstrip(".")
         kind = "file"
 
@@ -120,11 +124,35 @@ def _list_attachments(folder_name: str) -> List[Dict[str, Any]]:
     return out
 
 
+def _get_header_map(ws) -> Dict[str, int]:
+    """
+    Mappa nome_colonna -> indice colonna (0-based)
+    """
+    headers: Dict[str, int] = {}
+
+    for idx, cell in enumerate(ws[1]):
+        key = _normalize_str(cell.value)
+        if key:
+            headers[key] = idx
+
+    return headers
+
+
+def _cell_from_row(row: tuple, header_map: Dict[str, int], key: str) -> Any:
+    idx = header_map.get(key)
+    if idx is None:
+        return None
+    if idx >= len(row):
+        return None
+    return row[idx]
+
+
 def _read_excel_rows(limit: int = 5000) -> List[Dict[str, Any]]:
     """
-    Header atteso:
+    Header attesi:
     id, data, ora, Categoria, Titolo, robot, scaffale, cella, zona,
-    luci robot, errore, note, rimosso, risoluzione
+    luci robot, errore, note, rimosso, risoluzione,
+    data_update1, update1, data_update2, update2
     """
     if not _safe_exists_excel():
         return []
@@ -132,30 +160,42 @@ def _read_excel_rows(limit: int = 5000) -> List[Dict[str, Any]]:
     wb = load_workbook(EXCEL_PATH, data_only=True)
     ws = wb.active
 
+    header_map = _get_header_map(ws)
     rows: List[Dict[str, Any]] = []
 
     for r in ws.iter_rows(min_row=2, values_only=True):
-        if not r or r[0] is None:
+        if not r:
+            continue
+
+        raw_id = _cell_from_row(r, header_map, "id")
+        if raw_id is None:
             continue
 
         try:
-            rid = int(str(r[0]).strip())
+            rid = int(str(raw_id).strip())
         except Exception:
             continue
 
-        data = _normalize_str(r[1])
-        ora = _normalize_str(r[2])
-        categoria = _normalize_str(r[3])
-        titolo = _normalize_str(r[4])
-        robot = _normalize_str(r[5])
-        scaffale = _normalize_str(r[6])
-        cella = _normalize_str(r[7])
-        zona = _normalize_str(r[8])
-        luci = _normalize_str(r[9])
-        errore = _normalize_str(r[10])
-        note = _normalize_str(r[11])
-        rimosso = _normalize_str(r[12])
-        risoluzione = _normalize_str(r[13])
+        data = _normalize_str(_cell_from_row(r, header_map, "data"))
+        ora = _normalize_str(_cell_from_row(r, header_map, "ora"))
+        categoria = _normalize_str(_cell_from_row(r, header_map, "Categoria"))
+        titolo = _normalize_str(_cell_from_row(r, header_map, "Titolo"))
+        robot = _normalize_str(_cell_from_row(r, header_map, "robot"))
+        scaffale = _normalize_str(_cell_from_row(r, header_map, "scaffale"))
+        cella = _normalize_str(_cell_from_row(r, header_map, "cella"))
+        zona = _normalize_str(_cell_from_row(r, header_map, "zona"))
+        luci = _normalize_str(_cell_from_row(r, header_map, "luci robot"))
+        errore = _normalize_str(_cell_from_row(r, header_map, "errore"))
+        note = _normalize_str(_cell_from_row(r, header_map, "note"))
+        rimosso = _normalize_str(_cell_from_row(r, header_map, "rimosso"))
+        risoluzione = _normalize_str(_cell_from_row(r, header_map, "risoluzione"))
+
+        data_update1 = _normalize_str(_cell_from_row(r, header_map, "data_update1"))
+        update1 = _normalize_str(_cell_from_row(r, header_map, "update1"))
+        data_update2 = _normalize_str(_cell_from_row(r, header_map, "data_update2"))
+        update2 = _normalize_str(_cell_from_row(r, header_map, "update2"))
+
+        has_update = bool(update1 or update2)
 
         rows.append(
             {
@@ -176,6 +216,11 @@ def _read_excel_rows(limit: int = 5000) -> List[Dict[str, Any]]:
                 "note_preview": _truncate_preview(note),
                 "rimosso": rimosso,
                 "risoluzione": risoluzione,
+                "data_update1": data_update1,
+                "update1": update1,
+                "data_update2": data_update2,
+                "update2": update2,
+                "has_update": has_update,
             }
         )
 
@@ -239,6 +284,8 @@ def api_list_reports():
                     _normalize_str(x.get("errore")),
                     _normalize_str(x.get("scaffale")),
                     _normalize_str(x.get("cella")),
+                    _normalize_str(x.get("update1")),
+                    _normalize_str(x.get("update2")),
                 ]
             ).lower()
             return q in blob
@@ -268,6 +315,7 @@ def api_list_reports():
                 "categoria_css": r["categoria_css"],
                 "robot": r["robot"],
                 "note_preview": r["note_preview"],
+                "has_update": bool(r.get("has_update")),
                 "has_folder": bool(folder),
                 "folder_name": folder or "",
                 "attachments_count": len(attachments),
@@ -306,6 +354,11 @@ def api_get_report(report_id: int):
                 "note": item["note"],
                 "rimosso": item["rimosso"],
                 "risoluzione": item["risoluzione"],
+                "data_update1": item["data_update1"],
+                "update1": item["update1"],
+                "data_update2": item["data_update2"],
+                "update2": item["update2"],
+                "has_update": bool(item.get("has_update")),
                 "folder_name": folder or "",
                 "attachments": attachments,
             },

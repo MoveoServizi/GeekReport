@@ -78,6 +78,10 @@ HEADERS = [
     "note",
     "rimosso",
     "risoluzione",
+    "data_update1",
+    "update1",
+    "data_update2",
+    "update2",
 ]
 
 
@@ -119,7 +123,57 @@ def _jobs_gc() -> None:
 
 
 # =====================
-# Helpers
+# Helpers generici
+# =====================
+
+def normalize_spaces(value: str) -> str:
+    return " ".join((value or "").strip().split())
+
+
+def sanitize_titolo(value: str) -> str:
+    return normalize_spaces(value)[:MAX_TITOLO_LEN]
+
+
+def allowed_file(filename: str) -> bool:
+    if not filename or "." not in filename:
+        return False
+    ext = filename.rsplit(".", 1)[1].lower()
+    return ext in ALLOWED_EXT
+
+
+def safe_cell_str(value: Any) -> str:
+    if value is None:
+        return ""
+    return str(value).strip()
+
+
+def parse_bool_like_si_no(value: str, default: str = "no") -> str:
+    v = normalize_spaces(value).lower()
+    if v in ("si", "sì", "yes", "y", "true", "1"):
+        return "si"
+    if v in ("no", "n", "false", "0"):
+        return "no"
+    return default
+
+
+def parse_datetime_local(value: str) -> datetime:
+    return datetime.strptime(value, "%Y-%m-%dT%H:%M")
+
+
+def format_date_it(dt: datetime) -> str:
+    return dt.strftime("%d/%m/%Y")
+
+
+def format_time_it(dt: datetime) -> str:
+    return dt.strftime("%H:%M")
+
+
+def format_datetime_it(dt: datetime) -> str:
+    return dt.strftime("%d/%m/%Y %H:%M")
+
+
+# =====================
+# Excel helpers
 # =====================
 
 def ensure_report_assets() -> None:
@@ -132,21 +186,36 @@ def ensure_report_assets() -> None:
         ws.append(HEADERS)
         wb.save(EXCEL_PATH)
         wb.close()
+    else:
+        ensure_excel_headers()
 
 
-def allowed_file(filename: str) -> bool:
-    if not filename or "." not in filename:
-        return False
-    ext = filename.rsplit(".", 1)[1].lower()
-    return ext in ALLOWED_EXT
+def ensure_excel_headers() -> None:
+    wb = load_workbook(EXCEL_PATH)
+    ws = wb.active
+
+    current_headers = [ws.cell(row=1, column=i).value for i in range(1, ws.max_column + 1)]
+    changed = False
+
+    for idx, header in enumerate(HEADERS, start=1):
+        current_val = current_headers[idx - 1] if idx - 1 < len(current_headers) else None
+        if safe_cell_str(current_val) != header:
+            ws.cell(row=1, column=idx, value=header)
+            changed = True
+
+    if changed:
+        wb.save(EXCEL_PATH)
+
+    wb.close()
 
 
-def normalize_spaces(value: str) -> str:
-    return " ".join((value or "").strip().split())
-
-
-def sanitize_titolo(value: str) -> str:
-    return normalize_spaces(value)[:MAX_TITOLO_LEN]
+def get_header_index_map(ws) -> dict[str, int]:
+    headers: dict[str, int] = {}
+    for col in range(1, ws.max_column + 1):
+        value = ws.cell(row=1, column=col).value
+        if value:
+            headers[str(value).strip()] = col
+    return headers
 
 
 def get_next_id() -> int:
@@ -167,13 +236,251 @@ def get_next_id() -> int:
     return last_id + 1
 
 
-def append_row(row_values: list) -> None:
+def append_row(row_values: list[Any]) -> None:
     wb = load_workbook(EXCEL_PATH)
     ws = wb.active
     ws.append(row_values)
     wb.save(EXCEL_PATH)
     wb.close()
 
+
+def find_report_row_by_id(report_id: int) -> Optional[int]:
+    wb = load_workbook(EXCEL_PATH)
+    ws = wb.active
+
+    row_found = None
+    for row in range(2, ws.max_row + 1):
+        val = ws.cell(row=row, column=1).value
+        try:
+            if int(val) == int(report_id):
+                row_found = row
+                break
+        except Exception:
+            pass
+
+    wb.close()
+    return row_found
+
+
+def get_report_by_id(report_id: int) -> Optional[dict[str, Any]]:
+    wb = load_workbook(EXCEL_PATH)
+    ws = wb.active
+    headers = get_header_index_map(ws)
+
+    row_found = None
+    for row in range(2, ws.max_row + 1):
+        val = ws.cell(row=row, column=1).value
+        try:
+            if int(val) == int(report_id):
+                row_found = row
+                break
+        except Exception:
+            pass
+
+    if row_found is None:
+        wb.close()
+        return None
+
+    data: dict[str, Any] = {}
+    for key, col in headers.items():
+        data[key] = ws.cell(row=row_found, column=col).value
+
+    wb.close()
+
+    update1 = safe_cell_str(data.get("update1"))
+    update2 = safe_cell_str(data.get("update2"))
+    data["has_update"] = bool(update1 or update2)
+
+    return data
+
+
+def update_report_fields(report_id: int, fields: dict[str, Any]) -> bool:
+    wb = load_workbook(EXCEL_PATH)
+    ws = wb.active
+    headers = get_header_index_map(ws)
+
+    row_found = None
+    for row in range(2, ws.max_row + 1):
+        val = ws.cell(row=row, column=1).value
+        try:
+            if int(val) == int(report_id):
+                row_found = row
+                break
+        except Exception:
+            pass
+
+    if row_found is None:
+        wb.close()
+        return False
+
+    for key, value in fields.items():
+        if key in headers:
+            ws.cell(row=row_found, column=headers[key], value=value)
+
+    wb.save(EXCEL_PATH)
+    wb.close()
+    return True
+
+
+def add_report_update(report_id: int, update_text: str, update_dt: Optional[datetime] = None) -> dict[str, Any]:
+    update_text = (update_text or "").strip()
+    if not update_text:
+        return {"ok": False, "error": "Testo update vuoto."}
+
+    report = get_report_by_id(report_id)
+    if not report:
+        return {"ok": False, "error": "Report non trovato."}
+
+    update_dt = update_dt or datetime.now()
+    upd1 = safe_cell_str(report.get("update1"))
+    upd2 = safe_cell_str(report.get("update2"))
+
+    if not upd1:
+        ok = update_report_fields(
+            report_id,
+            {
+                "data_update1": format_datetime_it(update_dt),
+                "update1": update_text,
+            },
+        )
+        return {
+            "ok": ok,
+            "slot": 1 if ok else None,
+            "error": None if ok else "Errore salvataggio update 1.",
+        }
+
+    if not upd2:
+        ok = update_report_fields(
+            report_id,
+            {
+                "data_update2": format_datetime_it(update_dt),
+                "update2": update_text,
+            },
+        )
+        return {
+            "ok": ok,
+            "slot": 2 if ok else None,
+            "error": None if ok else "Errore salvataggio update 2.",
+        }
+
+    return {"ok": False, "error": "Questo report ha già 2 update."}
+
+def find_report_folder(report_id: int) -> Optional[Path]:
+    if not REPORT_DIR.exists():
+        return None
+
+    prefix = f"{report_id}_"
+    candidates = [p for p in REPORT_DIR.iterdir() if p.is_dir() and p.name.startswith(prefix)]
+    if not candidates:
+        return None
+
+    candidates.sort(key=lambda p: p.stat().st_mtime, reverse=True)
+    return candidates[0]
+
+
+def build_allegati_list_tex(folder_path: Path) -> str:
+    files = []
+    for p in sorted(folder_path.iterdir(), key=lambda x: x.name.lower()):
+        if not p.is_file():
+            continue
+        if p.suffix.lower() == ".pdf" and p.name.upper().startswith("REPORT_"):
+            continue
+        files.append(p.name)
+
+    if not files:
+        return r"\FileItem{Nessun allegato}"
+
+    return "\n".join([rf"\FileItem{{{name}}}" for name in files])
+
+
+def regenerate_report_pdf(report_id: int) -> dict[str, Any]:
+    try:
+        report = get_report_by_id(report_id)
+        if not report:
+            return {"ok": False, "message": "Report non trovato per rigenerazione PDF."}
+
+        folder_path = find_report_folder(report_id)
+        if not folder_path:
+            return {"ok": False, "message": "Cartella report non trovata per rigenerazione PDF."}
+
+        data_str = safe_cell_str(report.get("data"))
+        ora_str = safe_cell_str(report.get("ora"))
+        titolo = safe_cell_str(report.get("Titolo"))
+        categoria = safe_cell_str(report.get("Categoria"))
+        robot = safe_cell_str(report.get("robot"))
+        scaffale = safe_cell_str(report.get("scaffale")) or "senza scaffale"
+        cella = safe_cell_str(report.get("cella"))
+        zona = safe_cell_str(report.get("zona"))
+        luci_robot = safe_cell_str(report.get("luci robot"))
+        errore = safe_cell_str(report.get("errore"))
+        rimosso = safe_cell_str(report.get("rimosso"))
+        risoluzione = safe_cell_str(report.get("risoluzione"))
+        descrizione = safe_cell_str(report.get("note"))
+        data_update1 = safe_cell_str(report.get("data_update1"))
+        update1 = safe_cell_str(report.get("update1"))
+        data_update2 = safe_cell_str(report.get("data_update2"))
+        update2 = safe_cell_str(report.get("update2"))
+
+        allegati_list_tex = build_allegati_list_tex(folder_path)
+
+       
+
+        campi_report = {
+            "ReportID": str(report_id),
+            "DataIncidente": data_str,
+            "OraIncidente": ora_str,
+            "Titolo": titolo,
+            "Categoria": categoria,
+            "Robot": robot,
+            "Scaffale": scaffale,
+            "Cella": cella,
+            "Zona": zona,
+            "LuciRobot": luci_robot,
+            "Errore": errore,
+            "Rimosso": rimosso,
+            "Risoluzione": risoluzione,
+            "Descrizione": descrizione,
+            "DataUpdate1": data_update1,
+            "Update1": update1,
+            "DataUpdate2": data_update2,
+            "Update2": update2,
+            "AllegatiList": allegati_list_tex,
+        }
+
+        nome_pdf = None
+        existing_pdf = None
+        for p in folder_path.iterdir():
+            if p.is_file() and p.suffix.lower() == ".pdf" and p.name.upper().startswith("REPORT_"):
+                existing_pdf = p
+                nome_pdf = p.stem
+                break
+
+        if not nome_pdf:
+            nome_pdf = f"REPORT_{report_id}"
+
+        res = crea_report("modello", campi_report, nome_file=nome_pdf)
+        output_pdf = folder_path / f"{nome_pdf}.pdf"
+        shutil.copy2(res.pdf_path, output_pdf)
+
+        try:
+            cleanup_latex_tmp()
+        except Exception:
+            pass
+
+        return {
+            "ok": True,
+            "message": f"PDF rigenerato: {output_pdf.name}"
+        }
+
+    except Exception as e:
+        return {
+            "ok": False,
+            "message": f"Errore rigenerazione PDF: {e}"
+        }
+
+# =====================
+# Email
+# =====================
 
 def _send_report_email(
     report_id: int,
@@ -184,7 +491,7 @@ def _send_report_email(
     note: str,
     destinatari: list[str],
     allegati: list[Path],
-) -> dict:
+) -> dict[str, Any]:
     if not destinatari:
         return {"ok": True, "sent": 0, "errors": []}
 
@@ -192,7 +499,7 @@ def _send_report_email(
     template_name = "REPORT INCIDENTE"
 
     fields = {
-        "data": dt.strftime("%d/%m/%Y %H:%M"),
+        "data": format_datetime_it(dt),
         "robots": ", ".join(robots),
         "note": (note or "").strip(),
         "titolo": titolo,
@@ -208,10 +515,10 @@ def _send_report_email(
     for dest in destinatari:
         try:
             res = sender.send_template(dest, template_name, fields, attachments)
-            if res.ok:
+            if getattr(res, "ok", False):
                 sent += 1
             else:
-                errors.append(f"{dest}: {res.error}")
+                errors.append(f"{dest}: {getattr(res, 'error', 'Errore sconosciuto')}")
         except Exception as e:
             errors.append(f"{dest}: {e}")
 
@@ -228,12 +535,15 @@ def _send_report_email(
 
 def _run_job(job_id: str, payload: Dict[str, Any]) -> None:
     """
-    Worker che esegue le fasi pesanti:
+    Worker che esegue:
     - Excel
     - PDF
     - Email
-    - Cleanup latex/tmp
+    - Cleanup latex/tmp solo se non ci sono errori
     """
+    worker_errors: list[str] = []
+    pdf_report_path: Optional[Path] = None
+
     try:
         ensure_report_assets()
 
@@ -263,8 +573,8 @@ def _run_job(job_id: str, payload: Dict[str, Any]) -> None:
 
         row = [
             next_id,
-            dt.strftime("%d/%m/%Y"),
-            dt.strftime("%H:%M"),
+            format_date_it(dt),
+            format_time_it(dt),
             categoria,
             titolo,
             ", ".join(robots),
@@ -276,20 +586,26 @@ def _run_job(job_id: str, payload: Dict[str, Any]) -> None:
             descrizione,
             rimosso,
             risoluzione,
+            "",
+            "",
+            "",
+            "",
         ]
         append_row(row)
 
         # ---- PDF
-        pdf_report_path: Optional[Path] = None
         _job_set(job_id, phase="PDF", percent=62, message="Generazione PDF (LaTeX)…")
 
         try:
-            allegati_list_tex = "\n".join([rf"\item {p.name}" for p in saved_file_paths])
+            if saved_file_paths:
+                allegati_list_tex = "\n".join([rf"\FileItem{{{p.name}}}" for p in saved_file_paths])
+            else:
+                allegati_list_tex = r"\FileItem{Nessun allegato}"
 
             campi_report = {
                 "ReportID": str(next_id),
-                "DataIncidente": dt.strftime("%d/%m/%Y"),
-                "OraIncidente": dt.strftime("%H:%M"),
+                "DataIncidente": format_date_it(dt),
+                "OraIncidente": format_time_it(dt),
                 "Titolo": titolo,
                 "Categoria": categoria,
                 "Robot": ", ".join(robots),
@@ -314,6 +630,7 @@ def _run_job(job_id: str, payload: Dict[str, Any]) -> None:
             saved_file_paths.append(pdf_report_path)
 
         except Exception as e:
+            worker_errors.append(f"PDF non generato: {e}")
             _job_set(job_id, message=f"PDF non generato: {e}")
 
         # ---- EMAIL
@@ -330,22 +647,28 @@ def _run_job(job_id: str, payload: Dict[str, Any]) -> None:
                 destinatari=list(DESTINATARI),
                 allegati=list(saved_file_paths),
             )
+            if email_res.get("errors"):
+                worker_errors.extend([str(x) for x in email_res["errors"]])
         except Exception as e:
             email_res = {"ok": False, "sent": 0, "errors": [str(e)]}
+            worker_errors.append(f"Errore email: {e}")
 
-        # ---- CLEANUP
-        _job_set(job_id, phase="CLEANUP", percent=92, message="Pulizia file temporanei…")
-        try:
-            cleanup_latex_tmp()
-        except Exception:
-            pass
+        # ---- CLEANUP solo se non ci sono stati errori
+        cleanup_done = False
+        if not worker_errors:
+            _job_set(job_id, phase="CLEANUP", percent=92, message="Pulizia file temporanei…")
+            try:
+                cleanup_latex_tmp()
+                cleanup_done = True
+            except Exception as e:
+                worker_errors.append(f"Pulizia temp fallita: {e}")
 
         # ---- DONE
         _job_set(
             job_id,
             phase="DONE",
             percent=100,
-            message="Completato.",
+            message="Completato." if not worker_errors else "Completato con avvisi.",
             done=True,
             result={
                 "report_id": next_id,
@@ -357,6 +680,9 @@ def _run_job(job_id: str, payload: Dict[str, Any]) -> None:
                 "titolo": titolo,
                 "categoria": categoria,
                 "robots": robots,
+                "cleanup_done": cleanup_done,
+                "warnings": worker_errors,
+                "has_attachments": bool(payload["saved_file_paths"]),
             },
         )
 
@@ -420,10 +746,9 @@ def start_job():
     luci_c1 = normalize_spaces(request.form.get("luci_c1", ""))
     luci_c2 = normalize_spaces(request.form.get("luci_c2", ""))
     cella = normalize_spaces(request.form.get("cella", ""))
-    rimosso = normalize_spaces(request.form.get("rimosso", "no")).lower()
+    rimosso = parse_bool_like_si_no(request.form.get("rimosso", "no"), default="no")
     risoluzione = normalize_spaces(request.form.get("risoluzione", ""))
 
-    # Allegati facoltativi, ma vanno comunque letti
     files = request.files.getlist("media")
 
     # ---- validation
@@ -467,15 +792,12 @@ def start_job():
     if luci_c2 and luci_c2 not in LUCI_CAMPO2:
         errors.append("Luci campo 2 non valide.")
 
-    if rimosso not in ("si", "no"):
-        rimosso = "no"
-
     if errors:
         return jsonify({"ok": False, "errors": errors}), 400
 
     # ---- dt parse
     try:
-        dt = datetime.strptime(dt_local, "%Y-%m-%dT%H:%M")
+        dt = parse_datetime_local(dt_local)
     except Exception:
         return jsonify({"ok": False, "errors": ["Formato data/ora non valido."]}), 400
 
@@ -502,15 +824,19 @@ def start_job():
 
     # ---- save uploads (facoltativi)
     saved_file_paths: list[Path] = []
+    upload_warnings: list[str] = []
 
     for f in files:
         if not f or not f.filename:
             continue
+
         if not allowed_file(f.filename):
+            upload_warnings.append(f"File ignorato: {f.filename}")
             continue
 
         safe = secure_filename(f.filename)
         if not safe:
+            upload_warnings.append(f"Nome file non valido: {f.filename}")
             continue
 
         dest = folder_path / safe
@@ -519,12 +845,14 @@ def start_job():
             dest = folder_path / f"{dest.stem}_{i}{dest.suffix}"
             i += 1
 
-        f.save(dest)
-        saved_file_paths.append(dest)
+        try:
+            f.save(dest)
+            saved_file_paths.append(dest)
+        except Exception as e:
+            upload_warnings.append(f"Errore salvataggio {f.filename}: {e}")
 
     luci_robot = f"{luci_c1} - {luci_c2}".strip()
 
-    # ---- prepare payload for worker
     payload = {
         "dt": dt,
         "dt_local": dt_local,
@@ -545,18 +873,29 @@ def start_job():
         "saved_file_paths": saved_file_paths,
     }
 
+    msg = "Upload completato. Avvio elaborazione…"
+    if not saved_file_paths:
+        msg = "Nessun allegato caricato. Avvio elaborazione…"
+
     _job_set(
         job_id,
         phase="UPLOAD_SAVED",
         percent=35,
-        message="Upload completato. Avvio elaborazione…",
+        message=msg,
+        upload_warnings=upload_warnings,
     )
 
-    # ---- start worker thread
     t = threading.Thread(target=_run_job, args=(job_id, payload), daemon=True)
     t.start()
 
-    return jsonify({"ok": True, "job_id": job_id}), 200
+    return jsonify(
+        {
+            "ok": True,
+            "job_id": job_id,
+            "has_attachments": bool(saved_file_paths),
+            "upload_warnings": upload_warnings,
+        }
+    ), 200
 
 
 @report_incidente_bp.get("/MedicairGeek/reportIncidente/status/<job_id>")
@@ -587,3 +926,175 @@ def job_success(job_id: str):
         saved_files=r.get("saved_files", []),
         destinatari=r.get("destinatari", []),
     )
+
+
+# =====================
+# API report esistenti
+# =====================
+
+@report_incidente_bp.get("/MedicairGeek/reportIncidente/<int:report_id>")
+def get_report_detail(report_id: int):
+    ensure_report_assets()
+    report = get_report_by_id(report_id)
+    if not report:
+        return jsonify({"ok": False, "error": "Report non trovato."}), 404
+    return jsonify({"ok": True, "report": report}), 200
+
+
+@report_incidente_bp.post("/MedicairGeek/reportIncidente/<int:report_id>/update")
+def insert_report_update(report_id: int):
+    """
+    Inserisce un update nel primo slot libero.
+    Massimo 2 update.
+    Non invia email.
+    """
+    ensure_report_assets()
+
+    data = request.get_json(silent=True) or {}
+    update_text = (data.get("update") or "").strip()
+
+    if not update_text:
+        return jsonify({"ok": False, "error": "Update obbligatorio."}), 400
+
+    res = add_report_update(report_id, update_text)
+
+    if not res.get("ok"):
+        return jsonify(res), 400
+
+    report = get_report_by_id(report_id)
+    pdf_result = regenerate_report_pdf(report_id)
+    return jsonify(
+        {
+            "ok": True,
+            "slot": res.get("slot"),
+            "report": report,
+            "pdf_regenerated": bool(pdf_result and pdf_result.get("ok")),
+            "pdf_message": pdf_result.get("message") if isinstance(pdf_result, dict) else None,
+        }
+    ), 200
+
+@report_incidente_bp.post("/MedicairGeek/reportIncidente/<int:report_id>/edit")
+def edit_report(report_id: int):
+    """
+    Modifica i campi del report esistente.
+    Non invia email.
+    Facoltativamente rigenera il PDF.
+    """
+    try:
+        ensure_report_assets()
+
+        data = request.get_json(silent=True) or {}
+        if not isinstance(data, dict):
+            return jsonify({"ok": False, "error": "Payload non valido."}), 400
+
+        regenerate_pdf = bool(data.pop("_regenerate_pdf", True))
+
+        allowed_fields = {
+            "data",
+            "ora",
+            "Categoria",
+            "Titolo",
+            "robot",
+            "scaffale",
+            "cella",
+            "zona",
+            "luci robot",
+            "errore",
+            "note",
+            "rimosso",
+            "risoluzione",
+            "data_update1",
+            "update1",
+            "data_update2",
+            "update2",
+        }
+
+        fields_to_update: dict[str, Any] = {}
+
+        for k, v in data.items():
+            if k not in allowed_fields:
+                continue
+
+            if isinstance(v, str):
+                v = v.strip()
+
+            if k == "Titolo":
+                if not str(v).strip():
+                    return jsonify({"ok": False, "error": "Titolo obbligatorio."}), 400
+                if len(normalize_spaces(str(v))) > MAX_TITOLO_LEN:
+                    return jsonify({
+                        "ok": False,
+                        "error": f"Titolo troppo lungo: massimo {MAX_TITOLO_LEN} caratteri."
+                    }), 400
+                v = sanitize_titolo(str(v))
+
+            elif k == "Categoria":
+                if v not in CATEGORIE_LIST:
+                    return jsonify({"ok": False, "error": "Categoria non valida."}), 400
+
+            elif k == "rimosso":
+                v = parse_bool_like_si_no(str(v), default="no")
+
+            fields_to_update[k] = v
+
+        if not fields_to_update:
+            return jsonify({"ok": False, "error": "Nessun campo valido da aggiornare."}), 400
+
+        ok = update_report_fields(report_id, fields_to_update)
+        if not ok:
+            return jsonify({"ok": False, "error": "Report non trovato."}), 404
+
+        pdf_result = None
+        if regenerate_pdf:
+            pdf_result = regenerate_report_pdf(report_id)
+
+        report = get_report_by_id(report_id)
+
+        return jsonify(
+            {
+                "ok": True,
+                "message": "Report aggiornato correttamente.",
+                "report": report,
+                "pdf_regenerated": bool(pdf_result and pdf_result.get("ok")),
+                "pdf_message": pdf_result.get("message") if isinstance(pdf_result, dict) else None,
+            }
+        ), 200
+
+    except Exception as e:
+        return jsonify({
+            "ok": False,
+            "error": f"Errore interno durante la modifica: {e}"
+        }), 500
+
+@report_incidente_bp.get("/MedicairGeek/reportIncidente/<int:report_id>/update-info")
+def get_report_update_info(report_id: int):
+    """
+    Endpoint comodo per sapere se il report ha update e quanti slot liberi restano.
+    """
+    ensure_report_assets()
+    report = get_report_by_id(report_id)
+    if not report:
+        return jsonify({"ok": False, "error": "Report non trovato."}), 404
+
+    update1 = safe_cell_str(report.get("update1"))
+    update2 = safe_cell_str(report.get("update2"))
+
+    used_slots = 0
+    if update1:
+        used_slots += 1
+    if update2:
+        used_slots += 1
+
+    return jsonify(
+        {
+            "ok": True,
+            "has_update": bool(update1 or update2),
+            "used_slots": used_slots,
+            "free_slots": max(0, 2 - used_slots),
+            "can_add_update": used_slots < 2,
+            "data_update1": report.get("data_update1"),
+            "update1": report.get("update1"),
+            "data_update2": report.get("data_update2"),
+            "update2": report.get("update2"),
+        }
+    ), 200

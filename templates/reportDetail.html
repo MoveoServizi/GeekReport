@@ -18,6 +18,10 @@
       --cat-altro:#4da3ff;
 
       --accent:#7cc4ff;
+      --warning:#ffe37a;
+      --danger:#ff8f8f;
+      --ok:#7ce3a1;
+
       font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
     }
 
@@ -84,6 +88,24 @@
       color:var(--text);
       border:1px solid rgba(124,196,255,.28);
       background:linear-gradient(180deg, rgba(124,196,255,.28), rgba(124,196,255,.10));
+      cursor:pointer;
+    }
+
+    .btn.secondary{
+      border:1px solid rgba(255,255,255,.10);
+      background:linear-gradient(180deg, rgba(255,255,255,.07), rgba(255,255,255,.03));
+      color:var(--muted);
+    }
+
+    .btn.warning{
+      border:1px solid rgba(255,227,122,.30);
+      background:linear-gradient(180deg, rgba(255,227,122,.18), rgba(255,227,122,.08));
+      color:#ffe37a;
+    }
+
+    .btn:disabled{
+      opacity:.5;
+      cursor:not-allowed;
     }
 
     .card{
@@ -166,6 +188,13 @@
       font-weight:900;
       text-transform:uppercase;
       letter-spacing:.3px;
+    }
+
+    .toolbar{
+      display:flex;
+      flex-wrap:wrap;
+      gap:10px;
+      margin:0 0 14px;
     }
 
     .kv{
@@ -289,6 +318,154 @@
       font-size:15px;
       padding:13px 14px;
     }
+
+    .updateCard{
+      border:1px solid rgba(255,227,122,.22);
+      background:rgba(255,227,122,.06);
+      border-radius:14px;
+      padding:12px;
+      margin-bottom:10px;
+    }
+
+    .updateHead{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      margin-bottom:6px;
+    }
+
+    .updateTitle{
+      font-size:13px;
+      font-weight:900;
+      color:var(--warning);
+    }
+
+    .updateDate{
+      font-size:12px;
+      color:var(--muted);
+      font-weight:700;
+    }
+
+    .updateText{
+      white-space:pre-wrap;
+      line-height:1.45;
+      font-size:14px;
+      word-break:break-word;
+    }
+
+    .statusMsg{
+      margin-bottom:12px;
+      padding:11px 12px;
+      border-radius:14px;
+      font-size:13px;
+      display:none;
+    }
+
+    .statusMsg.ok{
+      display:block;
+      background:rgba(124,227,161,.10);
+      border:1px solid rgba(124,227,161,.24);
+      color:#c9ffd8;
+    }
+
+    .statusMsg.err{
+      display:block;
+      background:rgba(255,107,107,.10);
+      border:1px solid rgba(255,107,107,.24);
+      color:#ffd0d0;
+    }
+
+    .modal{
+      position:fixed;
+      inset:0;
+      background:rgba(0,0,0,.62);
+      display:none;
+      align-items:center;
+      justify-content:center;
+      padding:18px;
+      z-index:1000;
+    }
+
+    .modal.show{
+      display:flex;
+    }
+
+    .modalCard{
+      width:min(760px, 100%);
+      max-height:90vh;
+      overflow:auto;
+      background:linear-gradient(180deg, rgba(255,255,255,.04), transparent 55%), var(--card);
+      border:1px solid rgba(255,255,255,.10);
+      border-radius:20px;
+      padding:16px;
+      box-shadow:0 18px 60px rgba(0,0,0,.55);
+    }
+
+    .modalTop{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      margin-bottom:14px;
+    }
+
+    .modalTitle{
+      margin:0;
+      font-size:18px;
+      font-weight:900;
+    }
+
+    .formGrid{
+      display:grid;
+      grid-template-columns:1fr;
+      gap:10px;
+    }
+
+    @media (min-width: 760px){
+      .formGrid.two{
+        grid-template-columns:1fr 1fr;
+      }
+    }
+
+    .field{
+      display:flex;
+      flex-direction:column;
+      gap:6px;
+    }
+
+    .field label{
+      font-size:12px;
+      font-weight:900;
+      color:var(--muted);
+      text-transform:uppercase;
+      letter-spacing:.2px;
+    }
+
+    .input, .textarea, .select{
+      width:100%;
+      border-radius:12px;
+      border:1px solid rgba(255,255,255,.10);
+      background:rgba(11,18,32,.85);
+      color:var(--text);
+      padding:11px 12px;
+      font-size:14px;
+      outline:none;
+    }
+
+    .textarea{
+      min-height:120px;
+      resize:vertical;
+      font-family:inherit;
+    }
+
+    .modalActions{
+      display:flex;
+      justify-content:flex-end;
+      gap:10px;
+      margin-top:14px;
+      flex-wrap:wrap;
+    }
   </style>
 </head>
 
@@ -308,6 +485,13 @@
       <div id="loading" class="empty">Caricamento…</div>
 
       <div id="content" style="display:none;">
+        <div id="statusBox" class="statusMsg"></div>
+
+        <div class="toolbar">
+          <button id="btnEdit" class="btn secondary" type="button">Modifica report</button>
+          <button id="btnAddUpdate" class="btn warning" type="button">Inserisci update</button>
+        </div>
+
         <div id="hero" class="hero">
           <div class="hero-date" id="heroDate"></div>
           <div class="hero-title" id="heroTitle"></div>
@@ -323,6 +507,9 @@
         <div class="box">
           <div class="note" id="note"></div>
         </div>
+
+        <div class="sectionTitle">Update</div>
+        <div id="updatesWrap"></div>
 
         <div class="sectionTitle">Allegati</div>
         <div class="box">
@@ -341,6 +528,106 @@
     </div>
   </div>
 
+  <!-- Modal Modifica -->
+  <div id="editModal" class="modal">
+    <div class="modalCard">
+      <div class="modalTop">
+        <h2 class="modalTitle">Modifica report</h2>
+        <button class="btn secondary" type="button" data-close="editModal">Chiudi</button>
+      </div>
+
+      <div class="formGrid two">
+        <div class="field">
+          <label for="fTitolo">Titolo</label>
+          <input id="fTitolo" class="input" maxlength="30">
+        </div>
+
+        <div class="field">
+          <label for="fCategoria">Categoria</label>
+          <select id="fCategoria" class="select">
+            <option value="Incidente">Incidente</option>
+            <option value="Problema Software">Problema Software</option>
+            <option value="Problema Hardware">Problema Hardware</option>
+            <option value="Altro">Altro</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label for="fRobot">Robot</label>
+          <input id="fRobot" class="input">
+        </div>
+
+        <div class="field">
+          <label for="fZona">Zona</label>
+          <input id="fZona" class="input">
+        </div>
+
+        <div class="field">
+          <label for="fScaffale">Scaffale</label>
+          <input id="fScaffale" class="input">
+        </div>
+
+        <div class="field">
+          <label for="fCella">Cella</label>
+          <input id="fCella" class="input">
+        </div>
+
+        <div class="field">
+          <label for="fLuci">Luci robot</label>
+          <input id="fLuci" class="input">
+        </div>
+
+        <div class="field">
+          <label for="fErrore">Errore</label>
+          <input id="fErrore" class="input">
+        </div>
+
+        <div class="field">
+          <label for="fRimosso">Rimosso</label>
+          <select id="fRimosso" class="select">
+            <option value="si">si</option>
+            <option value="no">no</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label for="fRisoluzione">Risoluzione</label>
+          <input id="fRisoluzione" class="input">
+        </div>
+      </div>
+
+      <div class="field" style="margin-top:10px;">
+        <label for="fNote">Note / Descrizione</label>
+        <textarea id="fNote" class="textarea"></textarea>
+      </div>
+
+      <div class="modalActions">
+        <button class="btn secondary" type="button" data-close="editModal">Annulla</button>
+        <button id="btnSaveEdit" class="btn" type="button">Salva modifiche</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Update -->
+  <div id="updateModal" class="modal">
+    <div class="modalCard">
+      <div class="modalTop">
+        <h2 class="modalTitle">Inserisci update</h2>
+        <button class="btn secondary" type="button" data-close="updateModal">Chiudi</button>
+      </div>
+
+      <div class="field">
+        <label for="fUpdateText">Testo update</label>
+        <textarea id="fUpdateText" class="textarea" placeholder="Scrivi qui l'update del report..."></textarea>
+      </div>
+
+      <div class="modalActions">
+        <button class="btn secondary" type="button" data-close="updateModal">Annulla</button>
+        <button id="btnSaveUpdate" class="btn warning" type="button">Salva update</button>
+      </div>
+    </div>
+  </div>
+
   <script>
     const reportId = {{ report_id|int }};
     const loading = document.getElementById("loading");
@@ -356,6 +643,34 @@
     const noteEl = document.getElementById("note");
     const attachMeta = document.getElementById("attachMeta");
     const attachGrid = document.getElementById("attachGrid");
+    const updatesWrap = document.getElementById("updatesWrap");
+    const statusBox = document.getElementById("statusBox");
+
+    const btnEdit = document.getElementById("btnEdit");
+    const btnAddUpdate = document.getElementById("btnAddUpdate");
+    const btnSaveEdit = document.getElementById("btnSaveEdit");
+    const btnSaveUpdate = document.getElementById("btnSaveUpdate");
+
+    const editModal = document.getElementById("editModal");
+    const updateModal = document.getElementById("updateModal");
+
+    const formEdit = {
+      titolo: document.getElementById("fTitolo"),
+      categoria: document.getElementById("fCategoria"),
+      robot: document.getElementById("fRobot"),
+      zona: document.getElementById("fZona"),
+      scaffale: document.getElementById("fScaffale"),
+      cella: document.getElementById("fCella"),
+      luci: document.getElementById("fLuci"),
+      errore: document.getElementById("fErrore"),
+      rimosso: document.getElementById("fRimosso"),
+      risoluzione: document.getElementById("fRisoluzione"),
+      note: document.getElementById("fNote")
+    };
+
+    const fUpdateText = document.getElementById("fUpdateText");
+
+    let currentReport = null;
 
     function esc(s){
       return String(s ?? "").replace(/[&<>"']/g, m => ({
@@ -367,38 +682,42 @@
       }[m]));
     }
 
+    function showStatus(message, isError=false){
+      statusBox.className = "statusMsg " + (isError ? "err" : "ok");
+      statusBox.textContent = message || "";
+      statusBox.style.display = message ? "block" : "none";
+    }
+
+    function openModal(el){ el.classList.add("show"); }
+    function closeModal(el){ el.classList.remove("show"); }
+
+    document.querySelectorAll("[data-close]").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const id = btn.getAttribute("data-close");
+        const modal = document.getElementById(id);
+        if(modal) closeModal(modal);
+      });
+    });
+
+    [editModal, updateModal].forEach(modal => {
+      modal.addEventListener("click", (e) => {
+        if(e.target === modal) closeModal(modal);
+      });
+    });
+
     function categoriaInfo(value){
       const v = String(value || "").trim().toLowerCase();
 
       if(v === "incidente"){
-        return {
-          heroClass: "cat-incidente",
-          dotClass: "dot-incidente",
-          label: "Incidente"
-        };
+        return { heroClass: "cat-incidente", dotClass: "dot-incidente", label: "Incidente" };
       }
-
       if(v === "problema software"){
-        return {
-          heroClass: "cat-software",
-          dotClass: "dot-software",
-          label: "Problema Software"
-        };
+        return { heroClass: "cat-software", dotClass: "dot-software", label: "Problema Software" };
       }
-
       if(v === "problema hardware"){
-        return {
-          heroClass: "cat-hardware",
-          dotClass: "dot-hardware",
-          label: "Problema Hardware"
-        };
+        return { heroClass: "cat-hardware", dotClass: "dot-hardware", label: "Problema Hardware" };
       }
-
-      return {
-        heroClass: "cat-altro",
-        dotClass: "dot-altro",
-        label: value || "Altro"
-      };
+      return { heroClass: "cat-altro", dotClass: "dot-altro", label: value || "Altro" };
     }
 
     function renderHero(r){
@@ -439,6 +758,36 @@
         `;
         kvEl.appendChild(d);
       }
+    }
+
+    function renderUpdates(r){
+      updatesWrap.innerHTML = "";
+
+      const updates = [
+        { title: "Update 1", date: r.data_update1, text: r.update1 },
+        { title: "Update 2", date: r.data_update2, text: r.update2 }
+      ].filter(u => String(u.text || "").trim() !== "");
+
+      if(!updates.length){
+        updatesWrap.innerHTML = `<div class="empty">Nessun update presente.</div>`;
+        btnAddUpdate.disabled = false;
+        return;
+      }
+
+      updates.forEach(u => {
+        const el = document.createElement("div");
+        el.className = "updateCard";
+        el.innerHTML = `
+          <div class="updateHead">
+            <div class="updateTitle">${esc(u.title)}</div>
+            <div class="updateDate">${esc(u.date || "")}</div>
+          </div>
+          <div class="updateText">${esc(u.text || "")}</div>
+        `;
+        updatesWrap.appendChild(el);
+      });
+
+      btnAddUpdate.disabled = updates.length >= 2;
     }
 
     function renderAttachments(att){
@@ -486,23 +835,136 @@
       }
     }
 
-    (async function(){
-      try{
-        const res = await fetch(`/MedicairGeek/ConsultaReport/report/${reportId}`, { cache: "no-store" });
-        const data = await res.json();
+    function fillEditForm(r){
+      formEdit.titolo.value = r.titolo || "";
+      formEdit.categoria.value = r.categoria || "Altro";
+      formEdit.robot.value = r.robot || "";
+      formEdit.zona.value = r.zona || "";
+      formEdit.scaffale.value = r.scaffale || "";
+      formEdit.cella.value = r.cella || "";
+      formEdit.luci.value = r.luci || "";
+      formEdit.errore.value = r.errore || "";
+      formEdit.rimosso.value = (r.rimosso || "no").toLowerCase() === "si" ? "si" : "no";
+      formEdit.risoluzione.value = r.risoluzione || "";
+      formEdit.note.value = r.note || "";
+    }
 
-        if(!data.ok){
-          loading.style.display = "none";
-          errorBox.style.display = "block";
-          return;
+    async function loadReport(){
+      const res = await fetch(`/MedicairGeek/ConsultaReport/report/${reportId}`, { cache: "no-store" });
+      const data = await res.json();
+
+      if(!data.ok){
+        throw new Error(data.error || "Report non trovato.");
+      }
+
+      const r = data.report;
+      currentReport = r;
+
+      renderHero(r);
+      renderKV(r);
+      noteEl.textContent = r.note || "";
+      renderUpdates(r);
+      renderAttachments(r.attachments || []);
+      fillEditForm(r);
+    }
+
+    btnEdit.addEventListener("click", () => {
+      if(!currentReport) return;
+      fillEditForm(currentReport);
+      openModal(editModal);
+    });
+
+    btnAddUpdate.addEventListener("click", () => {
+      if(btnAddUpdate.disabled) return;
+      fUpdateText.value = "";
+      openModal(updateModal);
+    });
+
+    btnSaveEdit.addEventListener("click", async () => {
+      try{
+        showStatus("");
+
+        const payload = {
+          Titolo: formEdit.titolo.value.trim(),
+          Categoria: formEdit.categoria.value.trim(),
+          robot: formEdit.robot.value.trim(),
+          zona: formEdit.zona.value.trim(),
+          scaffale: formEdit.scaffale.value.trim(),
+          cella: formEdit.cella.value.trim(),
+          "luci robot": formEdit.luci.value.trim(),
+          errore: formEdit.errore.value.trim(),
+          rimosso: formEdit.rimosso.value.trim(),
+          risoluzione: formEdit.risoluzione.value.trim(),
+          note: formEdit.note.value.trim(),
+          _regenerate_pdf: true
+        };
+
+        const res = await fetch(`/MedicairGeek/reportIncidente/${reportId}/edit`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
+
+        const raw = await res.text();
+
+        let data;
+        try {
+          data = JSON.parse(raw);
+        } catch(parseErr) {
+          throw new Error(`Il server non ha restituito JSON. Risposta ricevuta: ${raw.slice(0, 200)}`);
         }
 
-        const r = data.report;
-        renderHero(r);
-        renderKV(r);
-        noteEl.textContent = r.note || "";
-        renderAttachments(r.attachments || []);
+        if(!res.ok || !data.ok){
+          throw new Error(data.error || "Errore nel salvataggio.");
+        }
 
+        closeModal(editModal);
+        await loadReport();
+
+        let msg = "Report modificato correttamente.";
+        if (data.pdf_regenerated) {
+          msg += " PDF aggiornato.";
+        } else if (data.pdf_message) {
+          msg += " " + data.pdf_message;
+        }
+
+        showStatus(msg);
+      }catch(err){
+        showStatus(err.message || "Errore nel salvataggio.", true);
+      }
+    });
+    btnSaveUpdate.addEventListener("click", async () => {
+      try{
+        showStatus("");
+
+        const text = fUpdateText.value.trim();
+        if(!text){
+          throw new Error("Scrivi il testo dell'update.");
+        }
+
+        const res = await fetch(`/MedicairGeek/reportIncidente/${reportId}/update`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ update: text })
+        });
+
+        const data = await res.json();
+
+        if(!res.ok || !data.ok){
+          throw new Error(data.error || "Errore nel salvataggio update.");
+        }
+
+        closeModal(updateModal);
+        await loadReport();
+        showStatus("Update inserito correttamente.");
+      }catch(err){
+        showStatus(err.message || "Errore nel salvataggio update.", true);
+      }
+    });
+
+    (async function(){
+      try{
+        await loadReport();
         loading.style.display = "none";
         content.style.display = "block";
       }catch(e){
