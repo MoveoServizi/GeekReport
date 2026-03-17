@@ -13,9 +13,11 @@
       --border:rgba(255,255,255,.10);
 
       --cat-incidente:#2ecc71;
+      --cat-incidente-grave:#ff9f43;
       --cat-software:#9b59ff;
       --cat-hardware:#ff5a5a;
       --cat-altro:#4da3ff;
+      --cat-manutenzione:#ffffff;
 
       --accent:#7cc4ff;
       --warning:#ffe37a;
@@ -128,9 +130,11 @@
     }
 
     .cat-incidente{ border-left-color:var(--cat-incidente); }
+    .cat-incidente-grave{ border-left-color:var(--cat-incidente-grave); }
     .cat-software{ border-left-color:var(--cat-software); }
     .cat-hardware{ border-left-color:var(--cat-hardware); }
     .cat-altro{ border-left-color:var(--cat-altro); }
+    .cat-manutenzione{ border-left-color:var(--cat-manutenzione); }
 
     .hero-date{
       font-size:18px;
@@ -177,9 +181,14 @@
     }
 
     .dot-incidente{ background:var(--cat-incidente); }
+    .dot-incidente-grave{ background:var(--cat-incidente-grave); }
     .dot-software{ background:var(--cat-software); }
     .dot-hardware{ background:var(--cat-hardware); }
     .dot-altro{ background:var(--cat-altro); }
+    .dot-manutenzione{
+      background:var(--cat-manutenzione);
+      border:1px solid rgba(0,0,0,.35);
+    }
 
     .sectionTitle{
       margin:12px 0 8px;
@@ -466,6 +475,67 @@
       margin-top:14px;
       flex-wrap:wrap;
     }
+
+    .loadingOverlay{
+      position:fixed;
+      inset:0;
+      background:rgba(0,0,0,.62);
+      display:none;
+      align-items:center;
+      justify-content:center;
+      z-index:2000;
+      padding:20px;
+    }
+
+    .loadingOverlay.show{
+      display:flex;
+    }
+
+    .loadingCard{
+      width:min(460px, 100%);
+      background:linear-gradient(180deg, rgba(255,255,255,.04), transparent 55%), var(--card);
+      border:1px solid rgba(255,255,255,.10);
+      border-radius:20px;
+      padding:20px;
+      box-shadow:0 18px 60px rgba(0,0,0,.55);
+    }
+
+    .loadingTitle{
+      font-size:18px;
+      font-weight:900;
+      margin:0 0 10px;
+      color:var(--text);
+    }
+
+    .loadingText{
+      font-size:14px;
+      color:var(--muted);
+      margin-bottom:14px;
+      line-height:1.4;
+    }
+
+    .loadingBar{
+      width:100%;
+      height:14px;
+      border-radius:999px;
+      overflow:hidden;
+      background:rgba(255,255,255,.08);
+      border:1px solid rgba(255,255,255,.08);
+    }
+
+    .loadingBarFill{
+      height:100%;
+      width:0%;
+      border-radius:999px;
+      background:linear-gradient(90deg, rgba(124,196,255,.95), rgba(255,227,122,.95));
+      transition:width .25s ease;
+    }
+
+    .loadingHint{
+      margin-top:10px;
+      font-size:12px;
+      color:var(--muted);
+    }
   </style>
 </head>
 
@@ -478,7 +548,7 @@
           <p class="page-small">Dettaglio Report #{{ report_id }}</p>
         </div>
       </div>
-      <a class="btn" href="/MedicairGeek/storicoReport">← Storico</a>
+      <a class="btn" href="/MedicairGeek/storicoReport">Storico</a>
     </div>
 
     <div class="card">
@@ -546,8 +616,10 @@
           <label for="fCategoria">Categoria</label>
           <select id="fCategoria" class="select">
             <option value="Incidente">Incidente</option>
+            <option value="Incidente Grave">Incidente Grave</option>
             <option value="Problema Software">Problema Software</option>
             <option value="Problema Hardware">Problema Hardware</option>
+            <option value="Intervento Manutenzione">Intervento Manutenzione</option>
             <option value="Altro">Altro</option>
           </select>
         </div>
@@ -594,11 +666,20 @@
           <label for="fRisoluzione">Risoluzione</label>
           <input id="fRisoluzione" class="input">
         </div>
+
+
       </div>
+
+      
 
       <div class="field" style="margin-top:10px;">
         <label for="fNote">Note / Descrizione</label>
         <textarea id="fNote" class="textarea"></textarea>
+      </div>
+
+      <div class="field" style="margin-top:10px;">
+        <label for="fEditFiles">Aggiungi allegati</label>
+        <input id="fEditFiles" class="input" type="file" multiple>
       </div>
 
       <div class="modalActions">
@@ -621,10 +702,29 @@
         <textarea id="fUpdateText" class="textarea" placeholder="Scrivi qui l'update del report..."></textarea>
       </div>
 
+      <div class="field" style="margin-top:10px;">
+        <label for="fUpdateFiles">Aggiungi allegati</label>
+        <input id="fUpdateFiles" class="input" type="file" multiple>
+      </div>
+
       <div class="modalActions">
         <button class="btn secondary" type="button" data-close="updateModal">Annulla</button>
         <button id="btnSaveUpdate" class="btn warning" type="button">Salva update</button>
       </div>
+    </div>
+  </div>
+
+  <!-- Overlay caricamento -->
+  <div id="loadingOverlay" class="loadingOverlay">
+    <div class="loadingCard">
+      <h3 id="loadingTitle" class="loadingTitle">Elaborazione in corso</h3>
+      <div id="loadingText" class="loadingText">Attendere…</div>
+
+      <div class="loadingBar">
+        <div id="loadingBarFill" class="loadingBarFill"></div>
+      </div>
+
+      <div id="loadingHint" class="loadingHint">Non chiudere la pagina.</div>
     </div>
   </div>
 
@@ -654,6 +754,12 @@
     const editModal = document.getElementById("editModal");
     const updateModal = document.getElementById("updateModal");
 
+    const loadingOverlay = document.getElementById("loadingOverlay");
+    const loadingTitle = document.getElementById("loadingTitle");
+    const loadingText = document.getElementById("loadingText");
+    const loadingBarFill = document.getElementById("loadingBarFill");
+    const loadingHint = document.getElementById("loadingHint");
+
     const formEdit = {
       titolo: document.getElementById("fTitolo"),
       categoria: document.getElementById("fCategoria"),
@@ -665,12 +771,17 @@
       errore: document.getElementById("fErrore"),
       rimosso: document.getElementById("fRimosso"),
       risoluzione: document.getElementById("fRisoluzione"),
+      redatto_da: document.getElementById("fRedattoDa"),
       note: document.getElementById("fNote")
     };
 
     const fUpdateText = document.getElementById("fUpdateText");
+    const fEditFiles = document.getElementById("fEditFiles");
+    const fUpdateFiles = document.getElementById("fUpdateFiles");
 
     let currentReport = null;
+    let loadingTimer = null;
+    let loadingValue = 0;
 
     function esc(s){
       return String(s ?? "").replace(/[&<>"']/g, m => ({
@@ -690,6 +801,71 @@
 
     function openModal(el){ el.classList.add("show"); }
     function closeModal(el){ el.classList.remove("show"); }
+
+    function showLoading(title, text){
+      loadingTitle.textContent = title || "Elaborazione in corso";
+      loadingText.textContent = text || "Attendere…";
+      loadingHint.textContent = "Non chiudere la pagina.";
+      loadingValue = 12;
+      loadingBarFill.style.width = loadingValue + "%";
+      loadingOverlay.classList.add("show");
+
+      if(loadingTimer){
+        clearInterval(loadingTimer);
+      }
+
+      loadingTimer = setInterval(() => {
+        if(loadingValue < 82){
+          loadingValue += Math.random() * 8;
+          if(loadingValue > 82) loadingValue = 82;
+          loadingBarFill.style.width = loadingValue + "%";
+        }
+      }, 220);
+    }
+
+    function setLoadingProgress(value, text){
+      if(typeof value === "number"){
+        loadingValue = Math.max(0, Math.min(100, value));
+        loadingBarFill.style.width = loadingValue + "%";
+      }
+      if(text){
+        loadingText.textContent = text;
+      }
+    }
+
+    function hideLoading(successText){
+      if(loadingTimer){
+        clearInterval(loadingTimer);
+        loadingTimer = null;
+      }
+
+      loadingValue = 100;
+      loadingBarFill.style.width = "100%";
+
+      if(successText){
+        loadingText.textContent = successText;
+      }
+
+      setTimeout(() => {
+        loadingOverlay.classList.remove("show");
+        loadingBarFill.style.width = "0%";
+        loadingValue = 0;
+      }, 350);
+    }
+
+    function failLoading(message){
+      if(loadingTimer){
+        clearInterval(loadingTimer);
+        loadingTimer = null;
+      }
+
+      loadingHint.textContent = message || "Si è verificato un errore.";
+      setTimeout(() => {
+        loadingOverlay.classList.remove("show");
+        loadingBarFill.style.width = "0%";
+        loadingValue = 0;
+      }, 250);
+    }
 
     document.querySelectorAll("[data-close]").forEach(btn => {
       btn.addEventListener("click", () => {
@@ -711,11 +887,17 @@
       if(v === "incidente"){
         return { heroClass: "cat-incidente", dotClass: "dot-incidente", label: "Incidente" };
       }
+      if(v === "incidente grave"){
+        return { heroClass: "cat-incidente-grave", dotClass: "dot-incidente-grave", label: "Incidente grave" };
+      }
       if(v === "problema software"){
         return { heroClass: "cat-software", dotClass: "dot-software", label: "Problema Software" };
       }
       if(v === "problema hardware"){
         return { heroClass: "cat-hardware", dotClass: "dot-hardware", label: "Problema Hardware" };
+      }
+      if(v === "intervento manutenzione"){
+        return { heroClass: "cat-manutenzione", dotClass: "dot-manutenzione", label: "Intervento Manutenzione" };
       }
       return { heroClass: "cat-altro", dotClass: "dot-altro", label: value || "Altro" };
     }
@@ -723,7 +905,14 @@
     function renderHero(r){
       const info = categoriaInfo(r.categoria);
 
-      hero.classList.remove("cat-incidente", "cat-software", "cat-hardware", "cat-altro");
+      hero.classList.remove(
+        "cat-incidente",
+        "cat-incidente-grave",
+        "cat-software",
+        "cat-hardware",
+        "cat-altro",
+        "cat-manutenzione"
+      );
       hero.classList.add(info.heroClass);
 
       heroDate.textContent = r.dt_label || "";
@@ -746,6 +935,7 @@
         ["Errore", r.errore || "—"],
         ["Rimosso", r.rimosso || "—"],
         ["Risoluzione", r.risoluzione || "—"],
+        ["Redatto da", r.redatto_da || "—"],
         ["Cartella", r.folder_name || "—"]
       ];
 
@@ -871,39 +1061,50 @@
     btnEdit.addEventListener("click", () => {
       if(!currentReport) return;
       fillEditForm(currentReport);
+      if (fEditFiles) fEditFiles.value = "";
       openModal(editModal);
     });
 
     btnAddUpdate.addEventListener("click", () => {
       if(btnAddUpdate.disabled) return;
       fUpdateText.value = "";
+      if (fUpdateFiles) fUpdateFiles.value = "";
       openModal(updateModal);
     });
 
     btnSaveEdit.addEventListener("click", async () => {
       try{
         showStatus("");
+        showLoading("Salvataggio modifiche", "Sto aggiornando il report…");
 
-        const payload = {
-          Titolo: formEdit.titolo.value.trim(),
-          Categoria: formEdit.categoria.value.trim(),
-          robot: formEdit.robot.value.trim(),
-          zona: formEdit.zona.value.trim(),
-          scaffale: formEdit.scaffale.value.trim(),
-          cella: formEdit.cella.value.trim(),
-          "luci robot": formEdit.luci.value.trim(),
-          errore: formEdit.errore.value.trim(),
-          rimosso: formEdit.rimosso.value.trim(),
-          risoluzione: formEdit.risoluzione.value.trim(),
-          note: formEdit.note.value.trim(),
-          _regenerate_pdf: true
-        };
+        const fd = new FormData();
+        fd.append("Titolo", formEdit.titolo.value.trim());
+        fd.append("Categoria", formEdit.categoria.value.trim());
+        fd.append("robot", formEdit.robot.value.trim());
+        fd.append("zona", formEdit.zona.value.trim());
+        fd.append("scaffale", formEdit.scaffale.value.trim());
+        fd.append("cella", formEdit.cella.value.trim());
+        fd.append("luci robot", formEdit.luci.value.trim());
+        fd.append("errore", formEdit.errore.value.trim());
+        fd.append("rimosso", formEdit.rimosso.value.trim());
+        fd.append("risoluzione", formEdit.risoluzione.value.trim());
+        fd.append("note", formEdit.note.value.trim());
+        fd.append("_regenerate_pdf", "true");
+
+        if (fEditFiles && fEditFiles.files && fEditFiles.files.length) {
+          for (const file of fEditFiles.files) {
+            fd.append("media", file);
+          }
+        }
+
+        setLoadingProgress(28, "Invio dati e file al server…");
 
         const res = await fetch(`/MedicairGeek/reportIncidente/${reportId}/edit`, {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload)
+          body: fd
         });
+
+        setLoadingProgress(68, "Elaborazione risposta…");
 
         const raw = await res.text();
 
@@ -918,10 +1119,17 @@
           throw new Error(data.error || "Errore nel salvataggio.");
         }
 
+        setLoadingProgress(86, "Aggiorno i dati a video…");
+
         closeModal(editModal);
         await loadReport();
 
+        hideLoading("Modifiche completate.");
+
         let msg = "Report modificato correttamente.";
+        if (data.saved_files && data.saved_files.length) {
+          msg += ` Allegati aggiunti: ${data.saved_files.length}.`;
+        }
         if (data.pdf_regenerated) {
           msg += " PDF aggiornato.";
         } else if (data.pdf_message) {
@@ -930,9 +1138,11 @@
 
         showStatus(msg);
       }catch(err){
+        failLoading(err.message || "Errore nel salvataggio.");
         showStatus(err.message || "Errore nel salvataggio.", true);
       }
     });
+
     btnSaveUpdate.addEventListener("click", async () => {
       try{
         showStatus("");
@@ -942,22 +1152,59 @@
           throw new Error("Scrivi il testo dell'update.");
         }
 
+        showLoading("Salvataggio update", "Sto inserendo l'update nel report…");
+
+        const fd = new FormData();
+        fd.append("update", text);
+
+        if (fUpdateFiles && fUpdateFiles.files && fUpdateFiles.files.length) {
+          for (const file of fUpdateFiles.files) {
+            fd.append("media", file);
+          }
+        }
+
+        setLoadingProgress(24, "Invio update e file al server…");
+
         const res = await fetch(`/MedicairGeek/reportIncidente/${reportId}/update`, {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ update: text })
+          body: fd
         });
 
-        const data = await res.json();
+        setLoadingProgress(65, "Elaborazione risposta…");
+
+        const raw = await res.text();
+
+        let data;
+        try {
+          data = JSON.parse(raw);
+        } catch(parseErr) {
+          throw new Error(`Il server non ha restituito JSON. Risposta ricevuta: ${raw.slice(0, 200)}`);
+        }
 
         if(!res.ok || !data.ok){
           throw new Error(data.error || "Errore nel salvataggio update.");
         }
 
+        setLoadingProgress(84, "Aggiorno il dettaglio report…");
+
         closeModal(updateModal);
         await loadReport();
-        showStatus("Update inserito correttamente.");
+
+        hideLoading("Update completato.");
+
+        let msg = "Update inserito correttamente.";
+        if (data.saved_files && data.saved_files.length) {
+          msg += ` Allegati aggiunti: ${data.saved_files.length}.`;
+        }
+        if (data.pdf_regenerated) {
+          msg += " PDF aggiornato.";
+        } else if (data.pdf_message) {
+          msg += " " + data.pdf_message;
+        }
+
+        showStatus(msg);
       }catch(err){
+        failLoading(err.message || "Errore nel salvataggio update.");
         showStatus(err.message || "Errore nel salvataggio update.", true);
       }
     });

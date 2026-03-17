@@ -2,11 +2,15 @@ from pathlib import Path
 # EMAIL
 
 DESTINATARI = [
-    "michele.cecchi@moveoservizi.com",
-    "bp.moveo@gmail.com",
+   
     "direzione@moveoservizi.com",
     "elena.pagani@medicair.it",
     "luca.cozzi@medicair.it",
+]
+
+DESTINATARI_ALL_REPORT = [
+    "michele.cecchi@moveoservizi.com",
+    "bp.moveo@gmail.com",
 ]
 
 # alias opzionale

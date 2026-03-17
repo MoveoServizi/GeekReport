@@ -12,7 +12,7 @@ from flask import Blueprint, jsonify, render_template, request, abort
 from openpyxl import Workbook, load_workbook
 from werkzeug.utils import secure_filename
 
-from config import DESTINATARI, REPORT_BASE_DIR
+from config import DESTINATARI,DESTINATARI_ALL_REPORT, REPORT_BASE_DIR
 from email_sender import EmailSender
 from modelli_latex import cleanup_latex_tmp, crea_report
 
@@ -37,8 +37,10 @@ MAX_TITOLO_LEN = 30
 
 CATEGORIE_LIST = [
     "Incidente",
+    "Incidente Grave",
     "Problema Software",
     "Problema Hardware",
+    "Intervento Manutenzione",
     "Altro",
 ]
 
@@ -78,6 +80,7 @@ HEADERS = [
     "note",
     "rimosso",
     "risoluzione",
+    "redatto_da", 
     "data_update1",
     "update1",
     "data_update2",
@@ -478,6 +481,58 @@ def regenerate_report_pdf(report_id: int) -> dict[str, Any]:
             "message": f"Errore rigenerazione PDF: {e}"
         }
 
+def find_report_folder(report_id: int) -> Optional[Path]:
+    if not REPORT_DIR.exists():
+        return None
+
+    prefix = f"{report_id}_"
+    candidates = [p for p in REPORT_DIR.iterdir() if p.is_dir() and p.name.startswith(prefix)]
+    if not candidates:
+        return None
+
+    candidates.sort(key=lambda p: p.stat().st_mtime, reverse=True)
+    return candidates[0]
+
+
+def save_uploaded_files_to_report_folder(report_id: int, files) -> dict[str, Any]:
+    folder_path = find_report_folder(report_id)
+    if not folder_path:
+        return {"ok": False, "error": "Cartella report non trovata.", "saved_files": [], "warnings": []}
+
+    saved_files: list[str] = []
+    warnings: list[str] = []
+
+    for f in files:
+        if not f or not f.filename:
+            continue
+
+        if not allowed_file(f.filename):
+            warnings.append(f"File ignorato: {f.filename}")
+            continue
+
+        safe = secure_filename(f.filename)
+        if not safe:
+            warnings.append(f"Nome file non valido: {f.filename}")
+            continue
+
+        dest = folder_path / safe
+        i = 1
+        while dest.exists():
+            dest = folder_path / f"{dest.stem}_{i}{dest.suffix}"
+            i += 1
+
+        try:
+            f.save(dest)
+            saved_files.append(dest.name)
+        except Exception as e:
+            warnings.append(f"Errore salvataggio {f.filename}: {e}")
+
+    return {
+        "ok": True,
+        "saved_files": saved_files,
+        "warnings": warnings,
+        "folder_path": folder_path,
+    }
 # =====================
 # Email
 # =====================
@@ -560,7 +615,7 @@ def _run_job(job_id: str, payload: Dict[str, Any]) -> None:
         luci_robot: str = payload["luci_robot"]
         rimosso: str = payload["rimosso"]
         risoluzione: str = payload["risoluzione"]
-
+        redatto_da: str = payload["redatto_da"]
         next_id: int = payload["next_id"]
         folder_name: str = payload["folder_name"]
         folder_path: Path = payload["folder_path"]
@@ -586,6 +641,7 @@ def _run_job(job_id: str, payload: Dict[str, Any]) -> None:
             descrizione,
             rimosso,
             risoluzione,
+            redatto_da,
             "",
             "",
             "",
@@ -616,6 +672,7 @@ def _run_job(job_id: str, payload: Dict[str, Any]) -> None:
                 "Errore": errore,
                 "Rimosso": rimosso,
                 "Risoluzione": risoluzione,
+                "RedattoDa": redatto_da,
                 "Descrizione": descrizione,
                 "AllegatiList": allegati_list_tex,
             }
@@ -636,6 +693,12 @@ def _run_job(job_id: str, payload: Dict[str, Any]) -> None:
         # ---- EMAIL
         _job_set(job_id, phase="EMAIL", percent=80, message="Invio email…")
 
+        destinari_email = list(DESTINATARI)
+        if categoria == "Incidente":
+            destinari_email = list(DESTINATARI_ALL_REPORT)
+        else:
+            destinari_email = list(DESTINATARI)
+
         try:
             email_res = _send_report_email(
                 report_id=next_id,
@@ -644,7 +707,7 @@ def _run_job(job_id: str, payload: Dict[str, Any]) -> None:
                 categoria=categoria,
                 robots=robots,
                 note=descrizione,
-                destinatari=list(DESTINATARI),
+                destinatari=destinari_email,
                 allegati=list(saved_file_paths),
             )
             if email_res.get("errors"):
@@ -748,7 +811,7 @@ def start_job():
     cella = normalize_spaces(request.form.get("cella", ""))
     rimosso = parse_bool_like_si_no(request.form.get("rimosso", "no"), default="no")
     risoluzione = normalize_spaces(request.form.get("risoluzione", ""))
-
+    redatto_da = normalize_spaces(request.form.get("redatto_da", ""))
     files = request.files.getlist("media")
 
     # ---- validation
@@ -867,6 +930,7 @@ def start_job():
         "luci_robot": luci_robot,
         "rimosso": rimosso,
         "risoluzione": risoluzione,
+        "redatto_da": redatto_da,
         "next_id": next_id,
         "folder_name": folder_name,
         "folder_path": folder_path,
@@ -946,48 +1010,72 @@ def insert_report_update(report_id: int):
     """
     Inserisce un update nel primo slot libero.
     Massimo 2 update.
+    Permette anche di aggiungere allegati alla cartella esistente.
     Non invia email.
     """
-    ensure_report_assets()
+    try:
+        ensure_report_assets()
 
-    data = request.get_json(silent=True) or {}
-    update_text = (data.get("update") or "").strip()
+        if request.content_type and "multipart/form-data" in request.content_type.lower():
+            update_text = (request.form.get("update") or "").strip()
+            files = request.files.getlist("media")
+        else:
+            data = request.get_json(silent=True) or {}
+            update_text = (data.get("update") or "").strip()
+            files = []
 
-    if not update_text:
-        return jsonify({"ok": False, "error": "Update obbligatorio."}), 400
+        if not update_text:
+            return jsonify({"ok": False, "error": "Update obbligatorio."}), 400
 
-    res = add_report_update(report_id, update_text)
+        res = add_report_update(report_id, update_text)
 
-    if not res.get("ok"):
-        return jsonify(res), 400
+        if not res.get("ok"):
+            return jsonify(res), 400
 
-    report = get_report_by_id(report_id)
-    pdf_result = regenerate_report_pdf(report_id)
-    return jsonify(
-        {
-            "ok": True,
-            "slot": res.get("slot"),
-            "report": report,
-            "pdf_regenerated": bool(pdf_result and pdf_result.get("ok")),
-            "pdf_message": pdf_result.get("message") if isinstance(pdf_result, dict) else None,
-        }
-    ), 200
+        upload_res = save_uploaded_files_to_report_folder(report_id, files)
+        if not upload_res.get("ok"):
+            return jsonify({"ok": False, "error": upload_res.get("error", "Errore upload file.")}), 400
+
+        pdf_result = regenerate_report_pdf(report_id)
+        report = get_report_by_id(report_id)
+
+        return jsonify(
+            {
+                "ok": True,
+                "slot": res.get("slot"),
+                "report": report,
+                "saved_files": upload_res.get("saved_files", []),
+                "upload_warnings": upload_res.get("warnings", []),
+                "pdf_regenerated": bool(pdf_result and pdf_result.get("ok")),
+                "pdf_message": pdf_result.get("message") if isinstance(pdf_result, dict) else None,
+            }
+        ), 200
+
+    except Exception as e:
+        return jsonify({"ok": False, "error": f"Errore interno durante l'update: {e}"}), 500
 
 @report_incidente_bp.post("/MedicairGeek/reportIncidente/<int:report_id>/edit")
 def edit_report(report_id: int):
     """
     Modifica i campi del report esistente.
+    Permette anche di aggiungere allegati alla cartella esistente.
     Non invia email.
-    Facoltativamente rigenera il PDF.
     """
     try:
         ensure_report_assets()
 
-        data = request.get_json(silent=True) or {}
-        if not isinstance(data, dict):
+        files = []
+
+        if request.content_type and "multipart/form-data" in request.content_type.lower():
+            raw_data = request.form.to_dict(flat=True)
+            files = request.files.getlist("media")
+        else:
+            raw_data = request.get_json(silent=True) or {}
+
+        if not isinstance(raw_data, dict):
             return jsonify({"ok": False, "error": "Payload non valido."}), 400
 
-        regenerate_pdf = bool(data.pop("_regenerate_pdf", True))
+        regenerate_pdf = str(raw_data.pop("_regenerate_pdf", "true")).lower() in ("true", "1", "yes", "si")
 
         allowed_fields = {
             "data",
@@ -1011,7 +1099,7 @@ def edit_report(report_id: int):
 
         fields_to_update: dict[str, Any] = {}
 
-        for k, v in data.items():
+        for k, v in raw_data.items():
             if k not in allowed_fields:
                 continue
 
@@ -1032,17 +1120,26 @@ def edit_report(report_id: int):
                 if v not in CATEGORIE_LIST:
                     return jsonify({"ok": False, "error": "Categoria non valida."}), 400
 
+            elif k == "zona":
+                if v and v not in ZONA_LIST:
+                    return jsonify({"ok": False, "error": "Zona non valida."}), 400
+
             elif k == "rimosso":
                 v = parse_bool_like_si_no(str(v), default="no")
 
             fields_to_update[k] = v
 
-        if not fields_to_update:
-            return jsonify({"ok": False, "error": "Nessun campo valido da aggiornare."}), 400
+        upload_res = save_uploaded_files_to_report_folder(report_id, files)
+        if not upload_res.get("ok"):
+            return jsonify({"ok": False, "error": upload_res.get("error", "Errore upload file.")}), 400
 
-        ok = update_report_fields(report_id, fields_to_update)
-        if not ok:
-            return jsonify({"ok": False, "error": "Report non trovato."}), 404
+        if not fields_to_update and not upload_res.get("saved_files"):
+            return jsonify({"ok": False, "error": "Nessun campo valido o file da aggiornare."}), 400
+
+        if fields_to_update:
+            ok = update_report_fields(report_id, fields_to_update)
+            if not ok:
+                return jsonify({"ok": False, "error": "Report non trovato."}), 404
 
         pdf_result = None
         if regenerate_pdf:
@@ -1055,6 +1152,8 @@ def edit_report(report_id: int):
                 "ok": True,
                 "message": "Report aggiornato correttamente.",
                 "report": report,
+                "saved_files": upload_res.get("saved_files", []),
+                "upload_warnings": upload_res.get("warnings", []),
                 "pdf_regenerated": bool(pdf_result and pdf_result.get("ok")),
                 "pdf_message": pdf_result.get("message") if isinstance(pdf_result, dict) else None,
             }
@@ -1065,7 +1164,7 @@ def edit_report(report_id: int):
             "ok": False,
             "error": f"Errore interno durante la modifica: {e}"
         }), 500
-
+    
 @report_incidente_bp.get("/MedicairGeek/reportIncidente/<int:report_id>/update-info")
 def get_report_update_info(report_id: int):
     """
@@ -1098,3 +1197,6 @@ def get_report_update_info(report_id: int):
             "update2": report.get("update2"),
         }
     ), 200
+
+
+

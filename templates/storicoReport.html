@@ -9,15 +9,21 @@
     :root{
       --bg:#0b0f14;
       --card:#0f1620;
-      --text:#e8eef6;
       --muted:#9fb0c0;
-      --border:rgba(255,255,255,.08);
-      --accent:#7cc4ff;
+      --text:#e8eef6;
+      --border:rgba(255,255,255,.10);
 
       --cat-incidente:#2ecc71;
+      --cat-incidente-grave:#ff9f43;
       --cat-software:#9b59ff;
       --cat-hardware:#ff5a5a;
       --cat-altro:#4da3ff;
+      --cat-manutenzione:#ffffff;
+
+      --accent:#7cc4ff;
+      --warning:#ffe37a;
+      --danger:#ff8f8f;
+      --ok:#7ce3a1;
 
       font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
     }
@@ -144,8 +150,10 @@
     }
 
     .cat-incidente{ border-left-color:var(--cat-incidente); }
+    .cat-incidente-grave{ border-left-color:var(--cat-incidente-grave); }
     .cat-software{ border-left-color:var(--cat-software); }
     .cat-hardware{ border-left-color:var(--cat-hardware); }
+    .cat-manutenzione{ border-left-color:var(--cat-manutenzione); }
     .cat-altro{ border-left-color:var(--cat-altro); }
 
     .report-date{
@@ -303,8 +311,10 @@
         const v = String(cat || "").trim().toLowerCase();
 
         if(v === "incidente") return "cat-incidente";
+        if(v === "incidente grave") return "cat-incidente-grave";
         if(v === "problema software") return "cat-software";
         if(v === "problema hardware") return "cat-hardware";
+        if(v === "intervento manutenzione") return "cat-manutenzione";
         return "cat-altro";
       }
 
@@ -336,7 +346,7 @@
         listEl.style.display = "grid";
 
         const html = reports.map(r => {
-          const css = getCategoriaCss(r.categoria_css || r.categoria);
+          const css = getCategoriaCss(r.categoria);
           const dt = escapeHtml(r.dt_label || "");
           const titolo = escapeHtml(r.titolo || "Senza titolo");
           const updateBadge = r.has_update ? `<span class="update-badge">UPDATE</span>` : "";
