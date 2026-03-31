@@ -34,8 +34,8 @@ USE_TLS = True
 # =========================
 DEFAULT_TEMPLATES: Dict[str, Dict[str, Any]] = {
     "REPORT INCIDENTE": {
-        "required_fields": ["data", "robots", "note"],
-        "subject": "REPORT INCIDENTE [robots] - [data]",
+        "required_fields": ["data","categoria", "robots", "note"],
+        "subject": "REPORT [categoria] [robots] - [data]",
         "body": (
             "Buongiorno,\n"
             "Questa è un'email automatica in seguito ad un evento di incidente all'interno del magazzino Geek.\n\n"

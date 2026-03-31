@@ -696,8 +696,7 @@ def _run_job(job_id: str, payload: Dict[str, Any]) -> None:
         destinari_email = list(DESTINATARI)
         if categoria == "Incidente":
             destinari_email = list(DESTINATARI_ALL_REPORT)
-        else:
-            destinari_email = list(DESTINATARI)
+        
 
         try:
             email_res = _send_report_email(

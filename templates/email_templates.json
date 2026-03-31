@@ -3,9 +3,10 @@
     "required_fields": [
       "data",
       "robots",
+      "categoria",
       "note"
     ],
-    "subject": "REPORT INCIDENTE [robots] - [data]",
+    "subject": "REPORT [categoria] - [robots] - [data]",
     "body": "Buongiorno,\nQuesta è un'email automatica in seguito ad un evento di incidente all'interno del magazzino Geek.\n\nEVENTO\n\tData: [data]\n\tRobot coinvolti: [robots]\n\n\tDescrizione:\n\t[note]\n\nIn allegato i file.\nConsulta i report su https://api.moveoservizi.com/MedicairGeek/ \n\nGrazie mille per l'attenzione.\nMoveo Servizi\n"
   }
 }
