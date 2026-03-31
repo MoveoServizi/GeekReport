@@ -48,7 +48,7 @@ ROBOT_LIST = [
     "1216278", "1216279", "1216292", "1216294", "1216302", "1216306", "1216313", "1216314",
     "1216325", "1216337", "1216339", "1216340", "1216348", "1216349", "1216350",
     "Tutti", "Pavimento", "WorkingStation1", "WorkingStation2", "WorkingStation3",
-    "ChargingStation", "Altro", "Scaffale",
+    "ChargingStation1","ChargingStation2", "Scaffale","Rete Wifi/LAN","RMS","WMS","Altro"
 ]
 
 ZONA_LIST = [

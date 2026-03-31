@@ -16,6 +16,7 @@ from flask import Flask, render_template
 
 from report_incidente import report_incidente_bp
 from consulta_report import consulta_report_bp
+from info_impianto import info_impianto_bp
 
 
 def create_app() -> Flask:
@@ -28,6 +29,9 @@ def create_app() -> Flask:
 
     # Blueprint: consultazione / storico
     app.register_blueprint(consulta_report_bp)
+
+    # Blueprint: info impianto
+    app.register_blueprint(info_impianto_bp)
 
     # Home
     @app.get("/MedicairGeek")
