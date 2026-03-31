@@ -85,7 +85,13 @@ HEADERS = [
     "update1",
     "data_update2",
     "update2",
+    "sostituito_qr_scaffale",
+    "sostituito_qr_cella",
+    "parti_coinvolte",
 ]
+
+ROBOT_LIGHT_ITEMS = {r for r in ROBOT_LIST if r.isdigit() or r == "Tutti"}
+QR_TRACKING_COMPONENTS = {"Pavimento", "Scaffale"}
 
 
 # =====================
@@ -175,6 +181,19 @@ def format_datetime_it(dt: datetime) -> str:
     return dt.strftime("%d/%m/%Y %H:%M")
 
 
+def refresh_info_impianto_cache_after_report_change(
+    report_id: int,
+    previous_report: Optional[dict[str, Any]] = None,
+) -> Optional[str]:
+    try:
+        from info_impianto import refresh_info_impianto_cache_for_report
+
+        refresh_info_impianto_cache_for_report(report_id, previous_report=previous_report)
+        return None
+    except Exception as exc:
+        return f"Cache Info Impianto non aggiornata: {exc}"
+
+
 # =====================
 # Excel helpers
 # =====================
@@ -197,18 +216,55 @@ def ensure_excel_headers() -> None:
     wb = load_workbook(EXCEL_PATH)
     ws = wb.active
 
-    current_headers = [ws.cell(row=1, column=i).value for i in range(1, ws.max_column + 1)]
-    changed = False
+    current_headers = [safe_cell_str(ws.cell(row=1, column=i).value) for i in range(1, ws.max_column + 1)]
+    if current_headers == HEADERS and ws.max_column == len(HEADERS):
+        wb.close()
+        return
 
-    for idx, header in enumerate(HEADERS, start=1):
-        current_val = current_headers[idx - 1] if idx - 1 < len(current_headers) else None
-        if safe_cell_str(current_val) != header:
-            ws.cell(row=1, column=idx, value=header)
-            changed = True
+    old_header_map = {
+        safe_cell_str(ws.cell(row=1, column=i).value): i
+        for i in range(1, ws.max_column + 1)
+        if safe_cell_str(ws.cell(row=1, column=i).value)
+    }
 
-    if changed:
-        wb.save(EXCEL_PATH)
+    existing_records: list[dict[str, Any]] = []
+    for row_idx in range(2, ws.max_row + 1):
+        existing_records.append(
+            {
+                header: ws.cell(row=row_idx, column=col_idx).value
+                for header, col_idx in old_header_map.items()
+            }
+        )
 
+    ws.delete_rows(1, ws.max_row)
+    ws.append(HEADERS)
+
+    for record in existing_records:
+        scaffale_val = safe_cell_str(record.get("scaffale"))
+        cella_val = safe_cell_str(record.get("cella"))
+        qr_scaffale = safe_cell_str(record.get("sostituito_qr_scaffale"))
+        qr_cella = safe_cell_str(record.get("sostituito_qr_cella"))
+        old_codice = safe_cell_str(record.get("codice"))
+        old_sostituito = parse_bool_like_si_no(safe_cell_str(record.get("sostituito")), default="no")
+
+        if not qr_scaffale and old_codice and old_sostituito == "si" and scaffale_val and scaffale_val.lower() != "senza scaffale":
+            qr_scaffale = old_codice
+
+        if not qr_cella and old_codice and old_sostituito == "si" and cella_val:
+            qr_cella = old_codice
+
+        row_values: list[Any] = []
+        for header in HEADERS:
+            if header == "sostituito_qr_scaffale":
+                row_values.append(qr_scaffale)
+            elif header == "sostituito_qr_cella":
+                row_values.append(qr_cella)
+            else:
+                row_values.append(record.get(header))
+
+        ws.append(row_values)
+
+    wb.save(EXCEL_PATH)
     wb.close()
 
 
@@ -624,6 +680,9 @@ def _run_job(job_id: str, payload: Dict[str, Any]) -> None:
         rimosso: str = payload["rimosso"]
         risoluzione: str = payload["risoluzione"]
         redatto_da: str = payload["redatto_da"]
+        parti_coinvolte: str = (payload.get("parti_coinvolte", "") or "").strip()
+        sostituito_qr_scaffale: str = (payload.get("sostituito_qr_scaffale", "") or "").strip()
+        sostituito_qr_cella: str = (payload.get("sostituito_qr_cella", "") or "").strip()
         next_id: int = payload["next_id"]
         folder_name: str = payload["folder_name"]
         folder_path: Path = payload["folder_path"]
@@ -654,8 +713,15 @@ def _run_job(job_id: str, payload: Dict[str, Any]) -> None:
             "",
             "",
             "",
+            sostituito_qr_scaffale,
+            sostituito_qr_cella,
+            parti_coinvolte,
         ]
         append_row(row)
+
+        cache_warning = refresh_info_impianto_cache_after_report_change(next_id)
+        if cache_warning:
+            worker_errors.append(cache_warning)
 
         # ---- PDF
         _job_set(job_id, phase="PDF", percent=62, message="Generazione PDF (LaTeX)…")
@@ -825,6 +891,9 @@ def start_job():
     rimosso = parse_bool_like_si_no(request.form.get("rimosso", "no"), default="no")
     risoluzione = normalize_spaces(request.form.get("risoluzione", ""))
     redatto_da = normalize_spaces(request.form.get("redatto_da", ""))
+    sostituito_qr_scaffale = (request.form.get("sostituito_qr_scaffale", "") or "").strip()
+    sostituito_qr_cella = (request.form.get("sostituito_qr_cella", "") or "").strip()
+    parti_coinvolte = (request.form.get("parti_coinvolte", "") or "").strip()
     files = request.files.getlist("media")
 
     # ---- validation
@@ -849,9 +918,6 @@ def start_job():
     if not zona:
         errors.append("Zona è obbligatoria.")
 
-    if not luci_c1 or not luci_c2:
-        errors.append("Luci robot è obbligatorio (seleziona entrambi).")
-
     if not descrizione.strip():
         errors.append("Descrizione è obbligatoria.")
 
@@ -859,13 +925,27 @@ def start_job():
     if invalid:
         errors.append(f"Robot non validi: {', '.join(invalid)}")
 
+    robot_lights_required = any(r in ROBOT_LIGHT_ITEMS for r in robots)
+    if robot_lights_required:
+        if not luci_c1 or not luci_c2:
+            errors.append("Luci robot è obbligatorio (seleziona entrambi).")
+    else:
+        luci_c1 = luci_c1 or "Non applicabile"
+        luci_c2 = luci_c2 or "Altro"
+
+    if "Scaffale" in robots and sostituito_qr_scaffale and (not scaffale or scaffale.lower() == "senza scaffale"):
+        errors.append("Il campo Scaffale è obbligatorio quando inserisci QR sostituiti per Scaffale.")
+
+    if "Pavimento" in robots and sostituito_qr_cella and not cella:
+        errors.append("Il campo Cella è obbligatorio quando inserisci QR sostituiti per Pavimento.")
+
     if zona and zona not in ZONA_LIST:
         errors.append("Zona non valida.")
 
-    if luci_c1 and luci_c1 not in LUCI_CAMPO1:
+    if robot_lights_required and luci_c1 and luci_c1 not in LUCI_CAMPO1:
         errors.append("Luci campo 1 non valide.")
 
-    if luci_c2 and luci_c2 not in LUCI_CAMPO2:
+    if robot_lights_required and luci_c2 and luci_c2 not in LUCI_CAMPO2:
         errors.append("Luci campo 2 non valide.")
 
     if errors:
@@ -944,6 +1024,9 @@ def start_job():
         "rimosso": rimosso,
         "risoluzione": risoluzione,
         "redatto_da": redatto_da,
+        "sostituito_qr_scaffale": sostituito_qr_scaffale,
+        "sostituito_qr_cella": sostituito_qr_cella,
+        "parti_coinvolte": parti_coinvolte,
         "next_id": next_id,
         "folder_name": folder_name,
         "folder_path": folder_path,
@@ -1050,6 +1133,7 @@ def insert_report_update(report_id: int):
             return jsonify({"ok": False, "error": upload_res.get("error", "Errore upload file.")}), 400
 
         pdf_result = regenerate_report_pdf(report_id)
+        cache_warning = refresh_info_impianto_cache_after_report_change(report_id)
         report = get_report_by_id(report_id)
 
         return jsonify(
@@ -1061,6 +1145,7 @@ def insert_report_update(report_id: int):
                 "upload_warnings": upload_res.get("warnings", []),
                 "pdf_regenerated": bool(pdf_result and pdf_result.get("ok")),
                 "pdf_message": pdf_result.get("message") if isinstance(pdf_result, dict) else None,
+                "cache_warning": cache_warning,
             }
         ), 200
 
@@ -1076,6 +1161,7 @@ def edit_report(report_id: int):
     """
     try:
         ensure_report_assets()
+        previous_report = get_report_by_id(report_id)
 
         files = []
 
@@ -1108,6 +1194,9 @@ def edit_report(report_id: int):
             "update1",
             "data_update2",
             "update2",
+            "sostituito_qr_scaffale",
+            "sostituito_qr_cella",
+            "parti_coinvolte",
         }
 
         fields_to_update: dict[str, Any] = {}
@@ -1158,6 +1247,7 @@ def edit_report(report_id: int):
         if regenerate_pdf:
             pdf_result = regenerate_report_pdf(report_id)
 
+        cache_warning = refresh_info_impianto_cache_after_report_change(report_id, previous_report=previous_report)
         report = get_report_by_id(report_id)
 
         return jsonify(
@@ -1169,6 +1259,7 @@ def edit_report(report_id: int):
                 "upload_warnings": upload_res.get("warnings", []),
                 "pdf_regenerated": bool(pdf_result and pdf_result.get("ok")),
                 "pdf_message": pdf_result.get("message") if isinstance(pdf_result, dict) else None,
+                "cache_warning": cache_warning,
             }
         ), 200
 

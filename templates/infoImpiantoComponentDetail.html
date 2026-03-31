@@ -14,7 +14,6 @@
       --border:rgba(255,255,255,.08);
       --accent:#7cc4ff;
       --accent2:#77e68a;
-      --danger:#ff6b6b;
       font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
     }
     *{ box-sizing:border-box; }
@@ -88,32 +87,8 @@
       display:block;
       font-size:18px;
       font-weight:900;
-    }
-    .inlineSmall{
-      font-size:13px;
-      color:var(--muted);
-      font-weight:700;
-    }
-    .dangerText{ color:var(--danger); }
-    .dangerPill{
-      border-color: rgba(255,107,107,.34);
-      background: rgba(255,107,107,.08);
-    }
-    .statusBadge{
-      display:inline-block;
-      margin-top:8px;
-      padding:6px 10px;
-      border-radius:999px;
-      font-size:12px;
-      font-weight:900;
-      border:1px solid rgba(119,230,138,.26);
-      background: rgba(119,230,138,.10);
-      color:#b9f5c7;
-    }
-    .statusBadge.danger{
-      border-color: rgba(255,107,107,.4);
-      background: rgba(255,107,107,.12);
-      color:#ffb3b3;
+      white-space:pre-wrap;
+      word-break:break-word;
     }
     .section{ margin-top:16px; }
     .sectionTitle{
@@ -123,6 +98,11 @@
       color: var(--muted);
       font-weight:800;
       text-transform: uppercase;
+    }
+    .tableHint{
+      margin:0 0 8px;
+      color:var(--muted);
+      font-size:12px;
     }
     .tableWrap{
       overflow:auto;
@@ -145,83 +125,40 @@
       font-size:14px;
       vertical-align:top;
     }
-    tbody tr[data-detail="true"]{
-      cursor:pointer;
-      transition: background .15s ease;
-    }
-    tbody tr[data-detail="true"]:hover{
-      background: rgba(124,196,255,.07);
-    }
+    tbody tr[data-detail="true"]{ cursor:pointer; transition: background .15s ease; }
+    tbody tr[data-detail="true"]:hover{ background: rgba(124,196,255,.07); }
     tbody tr:last-child td{ border-bottom:none; }
-    .tableHint{
-      margin:0 0 8px;
-      color:var(--muted);
-      font-size:12px;
-    }
     .muted{ color:var(--muted); }
     .actions{ display:flex; gap:10px; flex-wrap:wrap; margin-top:16px; }
     .modalBackdrop{
-      position:fixed;
-      inset:0;
-      background: rgba(0,0,0,.68);
-      display:none;
-      align-items:center;
-      justify-content:center;
-      padding:16px;
-      z-index:9999;
+      position:fixed; inset:0; background: rgba(0,0,0,.68); display:none;
+      align-items:center; justify-content:center; padding:16px; z-index:9999;
     }
     .modalBackdrop.open{ display:flex; }
     .modalCard{
-      width:min(680px, 96vw);
-      max-height:90vh;
-      overflow:auto;
+      width:min(680px, 96vw); max-height:90vh; overflow:auto;
       background: linear-gradient(180deg, rgba(255,255,255,.03), transparent 55%), var(--card);
-      border:1px solid var(--border);
-      border-radius:18px;
-      padding:16px;
+      border:1px solid var(--border); border-radius:18px; padding:16px;
       box-shadow: 0 18px 46px rgba(0,0,0,.5);
     }
     .modalHead{
-      display:flex;
-      align-items:flex-start;
-      justify-content:space-between;
-      gap:10px;
-      margin-bottom:12px;
+      display:flex; align-items:flex-start; justify-content:space-between; gap:10px; margin-bottom:12px;
     }
     .modalTitle{ margin:0; font-size:18px; }
     .closeBtn{
-      border:1px solid rgba(255,255,255,.12);
-      background: rgba(255,255,255,.05);
-      color:var(--text);
-      border-radius:12px;
-      padding:8px 10px;
-      font-weight:800;
-      cursor:pointer;
+      border:1px solid rgba(255,255,255,.12); background: rgba(255,255,255,.05); color:var(--text);
+      border-radius:12px; padding:8px 10px; font-weight:800; cursor:pointer;
     }
-    .detailGrid{
-      display:grid;
-      gap:10px;
-    }
+    .detailGrid{ display:grid; gap:10px; }
     .detailItem{
-      border:1px solid rgba(255,255,255,.08);
-      background: rgba(255,255,255,.03);
-      border-radius:14px;
-      padding:10px 12px;
+      border:1px solid rgba(255,255,255,.08); background: rgba(255,255,255,.03);
+      border-radius:14px; padding:10px 12px;
     }
     .detailLabel{
-      display:block;
-      color:var(--muted);
-      font-size:12px;
-      text-transform:uppercase;
-      font-weight:800;
-      margin-bottom:6px;
+      display:block; color:var(--muted); font-size:12px; text-transform:uppercase;
+      font-weight:800; margin-bottom:6px;
     }
-    .detailValue{
-      display:block;
-      white-space:pre-wrap;
-      word-break:break-word;
-      line-height:1.45;
-    }
+    .detailValue{ display:block; white-space:pre-wrap; word-break:break-word; line-height:1.45; }
     @media (max-width: 768px){
       .wrap{ width:min(100vw, 100%); padding:12px 10px 22px; }
       .card{ padding:12px; }
@@ -239,100 +176,97 @@
           <img class="logo" src="{{ url_for('static', filename='img/CUBO.png') }}" alt="Logo">
         </a>
         <div>
-          <h1 class="{% if robot.is_removed %}dangerText{% endif %}">{{ robot.label }}</h1>
-          <p class="sub">Dettaglio impianto e storico auto-compilato dai report disponibili.</p>
-          <div class="statusBadge {% if robot.is_removed %}danger{% endif %}">
-            Ultimo stato: {{ robot.status_label }}{% if robot.latest_report_label %} · {{ robot.latest_report_label }}{% endif %}
-          </div>
+          <h1>{{ component.label }}</h1>
+          <p class="sub">{{ component.description or ('Dettaglio ' ~ section_label ~ ' con report collegati.') }}</p>
         </div>
       </div>
-      <a class="btn" href="/MedicairGeek/infoImpianto?tab=robot">← Torna ai Robot</a>
+      <a class="btn" href="/MedicairGeek/infoImpianto?tab={{ component.section }}">← Torna a {{ section_label }}</a>
     </div>
 
     <div class="card">
       <div class="summary">
-        <div class="pill {% if robot.is_removed %}dangerPill{% endif %}">
-          <span class="pillLabel">Numero Robot</span>
-          <span class="pillValue">{{ robot.id }} <span class="inlineSmall">({{ robot.full_id }})</span></span>
+        <div class="pill">
+          <span class="pillLabel">Sezione</span>
+          <span class="pillValue">{{ section_label }}</span>
         </div>
         <div class="pill">
-          <span class="pillLabel">IP</span>
-          <span class="pillValue">{{ robot.clean_ip }}</span>
+          <span class="pillLabel">Componente</span>
+          <span class="pillValue">{{ component.label }}</span>
         </div>
         <div class="pill">
           <span class="pillLabel">Report collegati</span>
           <span class="pillValue">{{ related_count }}</span>
         </div>
-        <div class="pill {% if robot.is_removed %}dangerPill{% endif %}">
-          <span class="pillLabel">Rimosso</span>
-          <span class="pillValue {% if robot.is_removed %}dangerText{% endif %}">{{ robot.status_label }}</span>
-        </div>
+        {% for info in component.info_cards or [] %}
+          <div class="pill">
+            <span class="pillLabel">{{ info.label }}</span>
+            <span class="pillValue">{{ info.value }}</span>
+          </div>
+        {% endfor %}
       </div>
 
-      <div class="section">
-        <div class="sectionTitle">Tabella 1 · Pezzi sostituiti</div>
-        <div class="tableWrap">
-          <table>
-            <thead>
-              <tr>
-                <th>Data</th>
-                <th>Pezzo / Parti coinvolte</th>
-              </tr>
-            </thead>
-            <tbody>
-              {% if replaced_parts %}
-                {% for row in replaced_parts %}
-                  <tr data-detail="true" data-modal-title="Pezzo sostituito" data-f1-label="Data" data-f1-value="{{ row.data|e }}" data-f2-label="Parti Coinvolte / Sostituite" data-f2-value="{{ row.pezzo|e }}">
-                    <td>{{ row.data }}</td>
-                    <td>{{ row.pezzo }}</td>
+      {% if network_rows %}
+        <div class="section">
+          <div class="sectionTitle">Elenco IP</div>
+          <div class="tableWrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Elemento</th>
+                  <th>IP</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for row in network_rows %}
+                  <tr>
+                    <td>{{ row.name }}</td>
+                    <td>{{ row.ip }}</td>
                   </tr>
                 {% endfor %}
-              {% else %}
-                <tr>
-                  <td colspan="2" class="muted">Nessun pezzo sostituito rilevato automaticamente dai report.</td>
-                </tr>
-              {% endif %}
-            </tbody>
-          </table>
+              </tbody>
+            </table>
+          </div>
         </div>
-      </div>
+      {% endif %}
 
-      <div class="section">
-        <div class="sectionTitle">Tabella 2 · Manutenzioni</div>
-        <div class="tableWrap">
-          <table>
-            <thead>
-              <tr>
-                <th>Data</th>
-                <th>Titolo</th>
-                <th>Parti coinvolte</th>
-                <th>Descrizione</th>
-                <th>Link manutenzione</th>
-              </tr>
-            </thead>
-            <tbody>
-              {% if manutenzioni %}
-                {% for row in manutenzioni %}
-                  <tr data-detail="true" data-modal-title="Dettaglio manutenzione" data-f1-label="Data" data-f1-value="{{ row.data|e }}" data-f2-label="Titolo" data-f2-value="{{ row.titolo|e }}" data-f3-label="Parti coinvolte" data-f3-value="{{ row.parti_coinvolte|e }}" data-f4-label="Descrizione" data-f4-value="{{ row.descrizione|e }}" data-f5-label="Link manutenzione" data-f5-value="Apri scheda collegata" data-link="{{ row.link|e }}" data-link-label="Apri manutenzione">
-                    <td>{{ row.data }}</td>
-                    <td>{{ row.titolo }}</td>
-                    <td>{{ row.parti_coinvolte }}</td>
-                    <td>{{ row.descrizione }}</td>
-                    <td><a class="btn" href="{{ row.link }}">Apri</a></td>
+      {% if show_qr_table %}
+        <div class="section">
+          <div class="sectionTitle">QR sostituiti</div>
+          <div class="tableWrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Data</th>
+                  <th>Riferimento</th>
+                  <th>QR sostituiti</th>
+                  <th>Descrizione</th>
+                  <th>Link report</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% if qr_changes %}
+                  {% for row in qr_changes %}
+                    <tr data-detail="true" data-modal-title="Dettaglio QR" data-f1-label="Data" data-f1-value="{{ row.data|e }}" data-f2-label="Riferimento" data-f2-value="{{ row.riferimento|e }}" data-f3-label="QR sostituiti" data-f3-value="{{ row.sostituito_qr|e }}" data-f4-label="Descrizione" data-f4-value="{{ row.descrizione|e }}" data-link="{{ row.link|e }}" data-link-label="Apri report">
+                      <td>{{ row.data }}</td>
+                      <td>{{ row.riferimento }}</td>
+                      <td>{{ row.sostituito_qr }}</td>
+                      <td>{{ row.descrizione }}</td>
+                      <td><a class="btn" href="{{ row.link }}">Apri</a></td>
+                    </tr>
+                  {% endfor %}
+                {% else %}
+                  <tr>
+                    <td colspan="5" class="muted">Nessun QR sostituito registrato nei report disponibili.</td>
                   </tr>
-                {% endfor %}
-              {% else %}
-                <tr>
-                  <td colspan="5" class="muted">Nessuna manutenzione trovata per questo robot.</td>
-                </tr>
-              {% endif %}
-            </tbody>
-          </table>
+                {% endif %}
+              </tbody>
+            </table>
+          </div>
         </div>
-      </div>
+      {% endif %}
 
       <div class="section">
-        <div class="sectionTitle">Tabella 3 · Incidenti e report</div>
+        <div class="sectionTitle">Report collegati</div>
         <div class="tableWrap">
           <table>
             <thead>
@@ -346,9 +280,9 @@
               </tr>
             </thead>
             <tbody>
-              {% if incidenti %}
-                {% for row in incidenti %}
-                  <tr data-detail="true" data-modal-title="Dettaglio report" data-f1-label="Data" data-f1-value="{{ row.data|e }}" data-f2-label="Titolo" data-f2-value="{{ row.titolo|e }}" data-f3-label="Tipo" data-f3-value="{{ row.tipo|e }}" data-f4-label="Descrizione" data-f4-value="{{ row.descrizione|e }}" data-f5-label="Rimosso" data-f5-value="{{ row.rimosso|e }}" data-f6-label="Link report" data-f6-value="Apri report completo" data-link="{{ row.link|e }}" data-link-label="Apri report">
+              {% if reports %}
+                {% for row in reports %}
+                  <tr data-detail="true" data-modal-title="Dettaglio report" data-f1-label="Data" data-f1-value="{{ row.data|e }}" data-f2-label="Titolo" data-f2-value="{{ row.titolo|e }}" data-f3-label="Tipo" data-f3-value="{{ row.tipo|e }}" data-f4-label="Descrizione" data-f4-value="{{ row.descrizione|e }}" data-f5-label="Rimosso" data-f5-value="{{ row.rimosso|e }}" data-link="{{ row.link|e }}" data-link-label="Apri report">
                     <td>{{ row.data }}</td>
                     <td>{{ row.titolo }}</td>
                     <td>{{ row.tipo }}</td>
@@ -359,7 +293,7 @@
                 {% endfor %}
               {% else %}
                 <tr>
-                  <td colspan="6" class="muted">Nessun report associato ancora disponibile per questo robot.</td>
+                  <td colspan="6" class="muted">Nessun report associato ancora disponibile per questo componente.</td>
                 </tr>
               {% endif %}
             </tbody>
@@ -368,7 +302,7 @@
       </div>
 
       <div class="actions">
-        <a class="btn" href="/MedicairGeek/infoImpianto?tab=robot">Lista Robot</a>
+        <a class="btn" href="/MedicairGeek/infoImpianto?tab={{ component.section }}">Torna a {{ section_label }}</a>
         <a class="btn" href="/MedicairGeek/storicoReport">Storico Report</a>
       </div>
     </div>

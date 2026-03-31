@@ -163,9 +163,9 @@
         <div class="sectionTitle">Hardware</div>
         <div class="grid">
           {% for item in hardware_items %}
-            <a class="btn secondary" href="/MedicairGeek/infoImpianto/placeholder/hardware/{{ item.slug }}?label={{ item.label|urlencode }}">
+            <a class="btn secondary" href="/MedicairGeek/infoImpianto/component/{{ item.slug }}">
               <span class="btnTitle">{{ item.label }}</span>
-              <span class="btnMeta">Pagina in costruzione</span>
+              <span class="btnMeta">{{ item.meta or 'Apri scheda' }}</span>
             </a>
           {% endfor %}
         </div>
@@ -173,16 +173,16 @@
         <div class="sectionTitle">Software</div>
         <div class="grid">
           {% for item in software_items %}
-            <a class="btn secondary" href="/MedicairGeek/infoImpianto/placeholder/software/{{ item.slug }}?label={{ item.label|urlencode }}">
+            <a class="btn secondary" href="/MedicairGeek/infoImpianto/component/{{ item.slug }}">
               <span class="btnTitle">{{ item.label }}</span>
-              <span class="btnMeta">Pagina in costruzione</span>
+              <span class="btnMeta">{{ item.meta or 'Apri scheda' }}</span>
             </a>
           {% endfor %}
         </div>
       {% endif %}
 
       <div class="note">
-        Per ora è attiva la sezione <b>Robot</b> con pagina di dettaglio e tabelle auto-compilate dai report già inseriti.
+        Sono disponibili le sezioni <b>Robot</b>, <b>Hardware</b> e <b>Software</b> con tabelle auto-compilate dai report già inseriti.
       </div>
 
       <div class="actions">

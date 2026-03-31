@@ -307,27 +307,39 @@
             <div id="titoloCounter" class="counter">0 / {{ max_titolo_len }}</div>
           </div>
 
-          <div class="two">
-            <div>
-              <label class="req">Numero robot (multi)</label>
-              <select name="robots" multiple required size="6">
-                {% for r in robot_list %}
-                  <option value="{{ r }}">{{ r }}</option>
-                {% endfor %}
-              </select>
-              <div class="tag">Selezione multipla.</div>
-            </div>
+          <div>
+            <label class="req">Numero robot (multi)</label>
+            <select name="robots" multiple required size="6">
+              {% for r in robot_list %}
+                <option value="{{ r }}">{{ r }}</option>
+              {% endfor %}
+            </select>
+            <div class="tag">Selezione multipla.</div>
+          </div>
 
+          <div id="scaffaleRow" class="row">
             <div>
               <label>Scaffale</label>
               <input type="text" name="scaffale" value="senza scaffale" placeholder="es. A12 / senza scaffale">
               <div class="tag">Es: A000001</div>
             </div>
+
+            <div id="scaffaleQrBox" style="display:none;">
+              <label>QR sostituiti scaffale</label>
+              <input type="text" name="sostituito_qr_scaffale" placeholder="es. QR-A01, QR-A02, QR-A03">
+            </div>
           </div>
 
-          <div>
-            <label>Cella</label>
-            <input type="text" name="cella" placeholder="es. 1550015">
+          <div id="cellaRow" class="row">
+            <div>
+              <label>Cella</label>
+              <input type="text" name="cella" placeholder="es. 1550015">
+            </div>
+
+            <div id="cellaQrBox" style="display:none;">
+              <label>QR sostituiti cella</label>
+              <input type="text" name="sostituito_qr_cella" placeholder="es. 1550015-A, 1550015-B">
+            </div>
           </div>
 
           <div>
@@ -342,7 +354,7 @@
 
           <div class="divider"></div>
 
-          <div>
+          <div id="luciRobotBox">
             <label class="req">Luci robot</label>
             <div class="two-always">
               <div>
@@ -363,7 +375,6 @@
                 </select>
               </div>
             </div>
-            <div class="tag">Seleziona entrambi i campi.</div>
           </div>
 
           <div>
@@ -389,6 +400,11 @@
               <label>Risoluzione</label>
               <input type="text" name="risoluzione" placeholder="es. riavvio / reset / riposizionamento">
             </div>
+          </div>
+
+          <div>
+            <label>Parti Coinvolte / Sostituite</label>
+            <textarea class="smallta" name="parti_coinvolte" rows="2" placeholder="es. ruota sinistra, bumper, parti meccaniche, sensore, QR cella..."></textarea>
           </div>
 
           <div class="form-group">
@@ -441,6 +457,16 @@
       const titoloInput = document.getElementById("titolo");
       const titoloCounter = document.getElementById("titoloCounter");
       const mediaInput = document.getElementById("mediaInput");
+      const robotSelect = form.querySelector('select[name="robots"]');
+      const scaffaleRow = document.getElementById("scaffaleRow");
+      const cellaRow = document.getElementById("cellaRow");
+      const scaffaleQrBox = document.getElementById("scaffaleQrBox");
+      const cellaQrBox = document.getElementById("cellaQrBox");
+      const luciRobotBox = document.getElementById("luciRobotBox");
+      const luciSelect1 = form.querySelector('select[name="luci_c1"]');
+      const luciSelect2 = form.querySelector('select[name="luci_c2"]');
+      const sostituitoQrScaffale = form.querySelector('input[name="sostituito_qr_scaffale"]');
+      const sostituitoQrCella = form.querySelector('input[name="sostituito_qr_cella"]');
 
       const modal = document.getElementById("progressModal");
       const fill = document.getElementById("modalFill");
@@ -503,6 +529,36 @@
         titoloCounter.classList.toggle("over", len > maxLen);
       }
 
+      function syncQrFields(){
+        const selected = Array.from(robotSelect?.selectedOptions || []).map(opt => opt.value);
+        const showScaffale = selected.includes("Scaffale");
+        const showPavimento = selected.includes("Pavimento");
+        const showRobotLights = selected.some(v => /^\d+$/.test(v) || v === "Tutti");
+
+        scaffaleRow.className = showScaffale ? "two" : "row";
+        scaffaleQrBox.style.display = showScaffale ? "block" : "none";
+        sostituitoQrScaffale.disabled = !showScaffale;
+        if(!showScaffale){
+          sostituitoQrScaffale.value = "";
+        }
+
+        cellaRow.className = showPavimento ? "two" : "row";
+        cellaQrBox.style.display = showPavimento ? "block" : "none";
+        sostituitoQrCella.disabled = !showPavimento;
+        if(!showPavimento){
+          sostituitoQrCella.value = "";
+        }
+
+        luciRobotBox.style.display = showRobotLights ? "block" : "none";
+        luciSelect1.required = showRobotLights;
+        luciSelect2.required = showRobotLights;
+
+        if(!showRobotLights){
+          luciSelect1.value = "Non applicabile";
+          luciSelect2.value = "Altro";
+        }
+      }
+
       function pollStatus(jobId){
         stopPoll();
 
@@ -550,7 +606,9 @@
       }
 
       titoloInput.addEventListener("input", updateTitoloCounter);
+      robotSelect?.addEventListener("change", syncQrFields);
       updateTitoloCounter();
+      syncQrFields();
 
       form.addEventListener("submit", function(ev){
         ev.preventDefault();

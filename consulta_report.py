@@ -152,7 +152,8 @@ def _read_excel_rows(limit: int = 5000) -> List[Dict[str, Any]]:
     Header attesi:
     id, data, ora, Categoria, Titolo, robot, scaffale, cella, zona,
     luci robot, errore, note, rimosso, risoluzione,
-    data_update1, update1, data_update2, update2
+    data_update1, update1, data_update2, update2, codice, sostituito,
+    sostituito_qr_scaffale, sostituito_qr_cella, parti_coinvolte
     """
     if not _safe_exists_excel():
         return []
@@ -194,6 +195,11 @@ def _read_excel_rows(limit: int = 5000) -> List[Dict[str, Any]]:
         update1 = _normalize_str(_cell_from_row(r, header_map, "update1"))
         data_update2 = _normalize_str(_cell_from_row(r, header_map, "data_update2"))
         update2 = _normalize_str(_cell_from_row(r, header_map, "update2"))
+        codice = _normalize_str(_cell_from_row(r, header_map, "codice"))
+        sostituito = _normalize_str(_cell_from_row(r, header_map, "sostituito"))
+        sostituito_qr_scaffale = _normalize_str(_cell_from_row(r, header_map, "sostituito_qr_scaffale"))
+        sostituito_qr_cella = _normalize_str(_cell_from_row(r, header_map, "sostituito_qr_cella"))
+        parti_coinvolte = _normalize_str(_cell_from_row(r, header_map, "parti_coinvolte"))
 
         has_update = bool(update1 or update2)
 
@@ -220,6 +226,11 @@ def _read_excel_rows(limit: int = 5000) -> List[Dict[str, Any]]:
                 "update1": update1,
                 "data_update2": data_update2,
                 "update2": update2,
+                "codice": codice,
+                "sostituito": sostituito,
+                "sostituito_qr_scaffale": sostituito_qr_scaffale,
+                "sostituito_qr_cella": sostituito_qr_cella,
+                "parti_coinvolte": parti_coinvolte,
                 "has_update": has_update,
             }
         )
@@ -358,6 +369,11 @@ def api_get_report(report_id: int):
                 "update1": item["update1"],
                 "data_update2": item["data_update2"],
                 "update2": item["update2"],
+                "codice": item.get("codice", ""),
+                "sostituito": item.get("sostituito", ""),
+                "sostituito_qr_scaffale": item.get("sostituito_qr_scaffale", ""),
+                "sostituito_qr_cella": item.get("sostituito_qr_cella", ""),
+                "parti_coinvolte": item.get("parti_coinvolte", ""),
                 "has_update": bool(item.get("has_update")),
                 "folder_name": folder or "",
                 "attachments": attachments,

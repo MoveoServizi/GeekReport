@@ -16,13 +16,18 @@ from flask import Flask, render_template
 
 from report_incidente import report_incidente_bp
 from consulta_report import consulta_report_bp
-from info_impianto import info_impianto_bp
+from info_impianto import ensure_info_impianto_cache, info_impianto_bp
 
 
 def create_app() -> Flask:
     app = Flask(__name__, static_folder="static", static_url_path="/MedicairGeek/static")
     app.config["SECRET_KEY"] = "CHANGE_ME__report_medicair_secret"
     app.config["MAX_CONTENT_LENGTH"] = 300 * 1024 * 1024  # 300MB
+
+    try:
+        ensure_info_impianto_cache()
+    except Exception as exc:
+        print(f"[InfoImpianto] Cache init warning: {exc}")
 
     # Blueprint: report incidente
     app.register_blueprint(report_incidente_bp)
