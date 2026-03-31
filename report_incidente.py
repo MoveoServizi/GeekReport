@@ -548,7 +548,7 @@ def _send_report_email(
     allegati: list[Path],
 ) -> dict[str, Any]:
     if not destinatari:
-        return {"ok": True, "sent": 0, "errors": []}
+        return {"ok": True, "sent": 0, "errors": [], "destinatari": [], "sent_to": []}
 
     sender = EmailSender()
     template_name = "REPORT INCIDENTE"
@@ -562,16 +562,22 @@ def _send_report_email(
         "report_id": str(report_id),
     }
 
-    attachments = [str(p) for p in (allegati or []) if p and p.exists() and p.is_file()]
+    attachments = [
+        str(p)
+        for p in (allegati or [])
+        if p and p.exists() and p.is_file() and p.suffix.lower() in {".pdf", ".xls", ".xlsx"}
+    ]
 
     sent = 0
     errors: list[str] = []
+    sent_to: list[str] = []
 
     for dest in destinatari:
         try:
             res = sender.send_template(dest, template_name, fields, attachments)
             if getattr(res, "ok", False):
                 sent += 1
+                sent_to.append(dest)
             else:
                 errors.append(f"{dest}: {getattr(res, 'error', 'Errore sconosciuto')}")
         except Exception as e:
@@ -581,6 +587,8 @@ def _send_report_email(
         "ok": sent > 0 and not errors,
         "sent": sent,
         "errors": errors,
+        "destinatari": list(destinatari),
+        "sent_to": sent_to,
     }
 
 
@@ -699,6 +707,11 @@ def _run_job(job_id: str, payload: Dict[str, Any]) -> None:
         
 
         try:
+            email_attachments = [
+                p for p in saved_file_paths
+                if p and p.exists() and p.is_file() and p.suffix.lower() in {".pdf", ".xls", ".xlsx"}
+            ]
+
             email_res = _send_report_email(
                 report_id=next_id,
                 dt=dt,
@@ -707,7 +720,7 @@ def _run_job(job_id: str, payload: Dict[str, Any]) -> None:
                 robots=robots,
                 note=descrizione,
                 destinatari=destinari_email,
-                allegati=list(saved_file_paths),
+                allegati=email_attachments,
             )
             if email_res.get("errors"):
                 worker_errors.extend([str(x) for x in email_res["errors"]])
@@ -738,6 +751,7 @@ def _run_job(job_id: str, payload: Dict[str, Any]) -> None:
                 "saved_files": saved_files,
                 "pdf_created": bool(pdf_report_path and pdf_report_path.exists()),
                 "email": email_res,
+                "destinatari": email_res.get("sent_to") or email_res.get("destinatari", []),
                 "dt_local": dt_local,
                 "titolo": titolo,
                 "categoria": categoria,
