@@ -8,12 +8,13 @@ from datetime import datetime
 from pathlib import Path
 from typing import Optional, Dict, Any
 
-from flask import Blueprint, jsonify, render_template, request, abort
+from flask import Blueprint, jsonify, render_template, request, abort, session
 from openpyxl import Workbook, load_workbook
 from werkzeug.utils import secure_filename
 
 from config import DESTINATARI,DESTINATARI_EVENTI_RILIEVO, REPORT_BASE_DIR
 from email_sender import EmailSender
+from log_utils import log_activity
 from modelli_latex import cleanup_latex_tmp, crea_report
 
 
@@ -1058,6 +1059,12 @@ def start_job():
         upload_warnings=upload_warnings,
     )
 
+    user = session.get("user", "anonymous")
+    saved_names = [p.name for p in saved_file_paths]
+    log_activity(
+        f"report_create | user={user} | report_id={next_id} | files={len(saved_file_paths)} | saved_files={','.join(saved_names) or '-'} | warnings={len(upload_warnings)} | ip={request.remote_addr}"
+    )
+
     t = threading.Thread(target=_run_job, args=(job_id, payload), daemon=True)
     t.start()
 
@@ -1144,6 +1151,12 @@ def insert_report_update(report_id: int):
         upload_res = save_uploaded_files_to_report_folder(report_id, files)
         if not upload_res.get("ok"):
             return jsonify({"ok": False, "error": upload_res.get("error", "Errore upload file.")}), 400
+
+        user = session.get("user", "anonymous")
+        saved_files = upload_res.get("saved_files", [])
+        log_activity(
+            f"report_add_update | user={user} | report_id={report_id} | update_length={len(update_text)} | files={len(saved_files)} | saved_files={','.join(saved_files) or '-'} | ip={request.remote_addr}"
+        )
 
         pdf_result = regenerate_report_pdf(report_id)
         cache_warning = refresh_info_impianto_cache_after_report_change(report_id)
@@ -1250,6 +1263,13 @@ def edit_report(report_id: int):
 
         if not fields_to_update and not upload_res.get("saved_files"):
             return jsonify({"ok": False, "error": "Nessun campo valido o file da aggiornare."}), 400
+
+        user = session.get("user", "anonymous")
+        saved_files = upload_res.get("saved_files", [])
+        if fields_to_update or saved_files:
+            log_activity(
+                f"report_edit | user={user} | report_id={report_id} | fields={len(fields_to_update)} | files={len(saved_files)} | saved_files={','.join(saved_files) or '-'} | ip={request.remote_addr}"
+            )
 
         if fields_to_update:
             ok = update_report_fields(report_id, fields_to_update)

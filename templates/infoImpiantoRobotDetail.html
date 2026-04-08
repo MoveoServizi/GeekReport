@@ -399,11 +399,8 @@
       const closeBtn = document.getElementById('closeRowDetail');
 
       // Swipe navigation
-      const robotList = [
-        "16278", "16279", "16292", "16294", "16302", "16306", "16313", "16314",
-        "16325", "16337", "16339", "16340", "16348", "16349", "16350"
-      ];
-      const currentRobotId = "{{ robot_id }}";
+      const robotList = {{ robot_ids | tojson }};
+      const currentRobotId = "{{ robot.id }}";
       let currentIndex = robotList.indexOf(currentRobotId);
       let touchStartX = 0;
       let touchStartY = 0;

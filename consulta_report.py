@@ -6,10 +6,11 @@ from typing import Any, Dict, List, Optional, Tuple
 import io
 import zipfile
 
-from flask import Blueprint, jsonify, render_template, request, abort, send_from_directory, send_file
+from flask import Blueprint, jsonify, render_template, request, abort, send_from_directory, send_file, session
 from openpyxl import load_workbook
 
 from config import REPORT_BASE_DIR
+from log_utils import log_activity
 
 
 consulta_report_bp = Blueprint("consulta_report", __name__)
@@ -401,6 +402,11 @@ def serve_report_media(folder_name: str, filename: str):
     if not file_path.exists() or not file_path.is_file():
         abort(404)
 
+    user = session.get("user", "anonymous")
+    log_activity(
+        f"media_access | user={user} | folder={folder_name} | file={filename} | ip={request.remote_addr}"
+    )
+
     return send_from_directory(directory=str(folder), path=filename, as_attachment=False)
 
 
@@ -445,6 +451,11 @@ def download_report_files(report_id: int):
 
     if not files:
         abort(404, description="Nessun file valido presente nel report.")
+
+    user = session.get("user", "anonymous")
+    log_activity(
+        f"report_download | user={user} | report_id={report_id} | files={len(files)} | ip={request.remote_addr}"
+    )
 
     memory_file = io.BytesIO()
     with zipfile.ZipFile(memory_file, "w", zipfile.ZIP_DEFLATED) as zf:

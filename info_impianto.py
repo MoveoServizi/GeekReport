@@ -1115,12 +1115,15 @@ def info_impianto_robot_detail(robot_id: str):
     if not robot:
         abort(404)
 
+    robot_ids = [r["id"] for r in ROBOT_REGISTRY]
+
     cached_robot = _read_robot_cache(robot)
     if cached_robot:
         return render_template(
             "infoImpiantoRobotDetail.html",
             title=f"Dettaglio {cached_robot['robot']['label']}",
             robot=cached_robot["robot"],
+            robot_ids=robot_ids,
             replaced_parts=cached_robot["replaced_parts"],
             manutenzioni=cached_robot["manutenzioni"],
             incidenti=cached_robot["incidenti"],
@@ -1135,6 +1138,7 @@ def info_impianto_robot_detail(robot_id: str):
         "infoImpiantoRobotDetail.html",
         title=f"Dettaglio {robot_view['label']}",
         robot=robot_view,
+        robot_ids=robot_ids,
         replaced_parts=tables["replaced_parts"],
         manutenzioni=tables["manutenzioni"],
         incidenti=tables["incidenti"],
@@ -1148,6 +1152,14 @@ def info_impianto_component_detail(slug: str):
     if not component:
         abort(404)
 
+    section = component.get("section", "")
+    if section == "hardware":
+        component_slugs = [item["slug"] for item in HARDWARE_ITEMS]
+    elif section == "software":
+        component_slugs = [item["slug"] for item in SOFTWARE_ITEMS]
+    else:
+        component_slugs = []
+
     cached_component = _read_component_cache(component)
     if cached_component:
         component_view = cached_component["component"]
@@ -1155,6 +1167,7 @@ def info_impianto_component_detail(slug: str):
             "infoImpiantoComponentDetail.html",
             title=f"Dettaglio {component_view['label']}",
             component=component_view,
+            component_slugs=component_slugs,
             reports=cached_component["reports"],
             qr_changes=cached_component["qr_changes"],
             related_count=cached_component["related_count"],
@@ -1170,6 +1183,7 @@ def info_impianto_component_detail(slug: str):
         "infoImpiantoComponentDetail.html",
         title=f"Dettaglio {component['label']}",
         component=component,
+        component_slugs=component_slugs,
         reports=tables["reports"],
         qr_changes=tables["qr_changes"],
         related_count=tables["related_count"],

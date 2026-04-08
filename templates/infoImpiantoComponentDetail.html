@@ -333,11 +333,8 @@
       const closeBtn = document.getElementById('closeRowDetail');
 
       // Swipe navigation
-      const componentList = [
-        "pavimento", "workingstation1", "workingstation2", "workingstation3",
-        "chargingstation1", "chargingstation2"
-      ];
-      const currentSlug = "{{ slug }}";
+      const componentList = {{ component_slugs | tojson }};
+      const currentSlug = "{{ component.slug }}";
       let currentIndex = componentList.indexOf(currentSlug);
       let touchStartX = 0;
       let touchStartY = 0;
