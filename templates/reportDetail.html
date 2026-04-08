@@ -14,14 +14,14 @@
       --text:#e8eef6;
       --border:rgba(255,255,255,.10);
 
-      --cat-incidente:#2ecc71;
-      --cat-dissalineato-qr:#6be89f;
-      --cat-incidente-grave:#ff9f43;
+      --cat-incidente:#fbff00;
+      --cat-dissalineato-qr:#a6ff00;
+      --cat-incidente-grave:#fc6824;
       --cat-software:#9b59ff;
-      --cat-hardware:#ff5a5a;
-      --cat-altro:#4da3ff;
-      --cat-manutenzione:#ffffff;
-      --cat-manutenzione-straordinaria:#ffe37a;
+      --cat-hardware:#ff5aef;
+      --cat-altro:#ffffff;
+      --cat-manutenzione:#00fe00;
+      --cat-manutenzione-straordinaria:#2207ed;
 
       --accent:#7cc4ff;
       --warning:#ffe37a;
@@ -795,6 +795,14 @@
     let loadingTimer = null;
     let loadingValue = 0;
 
+    // Swipe navigation
+    let reportList = [];
+    let currentIndex = -1;
+    let touchStartX = 0;
+    let touchStartY = 0;
+    let touchEndX = 0;
+    let touchEndY = 0;
+
     function esc(s){
       return String(s ?? "").replace(/[&<>"']/g, m => ({
         "&":"&amp;",
@@ -1078,6 +1086,62 @@
       fillEditForm(r);
     }
 
+    async function loadReportList(){
+      try {
+        const res = await fetch('/MedicairGeek/ConsultaReport/list?limit=1000', { cache: "no-store" });
+        const data = await res.json();
+        if(data.ok && data.reports){
+          reportList = data.reports.map(r => r.id).sort((a,b) => b - a); // Sort descending (newest first)
+          currentIndex = reportList.indexOf(reportId);
+        }
+      } catch(e) {
+        console.warn('Could not load report list for navigation:', e);
+      }
+    }
+
+    function handleTouchStart(e) {
+      touchStartX = e.changedTouches[0].screenX;
+      touchStartY = e.changedTouches[0].screenY;
+    }
+
+    function handleTouchEnd(e) {
+      touchEndX = e.changedTouches[0].screenX;
+      touchEndY = e.changedTouches[0].screenY;
+      handleSwipe();
+    }
+
+    function handleSwipe() {
+      const deltaX = touchEndX - touchStartX;
+      const deltaY = touchEndY - touchStartY;
+      const absDeltaX = Math.abs(deltaX);
+      const absDeltaY = Math.abs(deltaY);
+
+      // Only consider horizontal swipes
+      if (absDeltaX > absDeltaY && absDeltaX > 50) { // Minimum swipe distance
+        if (deltaX > 0) {
+          // Swipe right - previous report
+          navigateToPrev();
+        } else {
+          // Swipe left - next report
+          navigateToNext();
+        }
+      }
+    }
+
+    function navigateToPrev() {
+      if (currentIndex > 0) {
+        const prevId = reportList[currentIndex - 1];
+        window.location.href = `/MedicairGeek/storicoReport/${prevId}`;
+      }
+    }
+
+    function navigateToNext() {
+      if (currentIndex < reportList.length - 1) {
+        const nextId = reportList[currentIndex + 1];
+        window.location.href = `/MedicairGeek/storicoReport/${nextId}`;
+      }
+    }
+
     btnEdit.addEventListener("click", () => {
       if(!currentReport) return;
       fillEditForm(currentReport);
@@ -1231,9 +1295,14 @@
 
     (async function(){
       try{
+        await loadReportList();
         await loadReport();
         loading.style.display = "none";
         content.style.display = "block";
+
+        // Add swipe event listeners
+        document.addEventListener('touchstart', handleTouchStart, { passive: true });
+        document.addEventListener('touchend', handleTouchEnd, { passive: true });
       }catch(e){
         loading.style.display = "none";
         errorBox.style.display = "block";

@@ -398,6 +398,18 @@
       const modalLink = document.getElementById('rowDetailLink');
       const closeBtn = document.getElementById('closeRowDetail');
 
+      // Swipe navigation
+      const robotList = [
+        "16278", "16279", "16292", "16294", "16302", "16306", "16313", "16314",
+        "16325", "16337", "16339", "16340", "16348", "16349", "16350"
+      ];
+      const currentRobotId = "{{ robot_id }}";
+      let currentIndex = robotList.indexOf(currentRobotId);
+      let touchStartX = 0;
+      let touchStartY = 0;
+      let touchEndX = 0;
+      let touchEndY = 0;
+
       function closeModal() {
         modal.classList.remove('open');
         modal.setAttribute('aria-hidden', 'true');
@@ -436,6 +448,46 @@
         document.body.style.overflow = 'hidden';
       }
 
+      function handleTouchStart(e) {
+        touchStartX = e.changedTouches[0].screenX;
+        touchStartY = e.changedTouches[0].screenY;
+      }
+
+      function handleTouchEnd(e) {
+        touchEndX = e.changedTouches[0].screenX;
+        touchEndY = e.changedTouches[0].screenY;
+        handleSwipe();
+      }
+
+      function handleSwipe() {
+        const deltaX = touchEndX - touchStartX;
+        const deltaY = touchEndY - touchStartY;
+        const absDeltaX = Math.abs(deltaX);
+        const absDeltaY = Math.abs(deltaY);
+
+        if (absDeltaX > absDeltaY && absDeltaX > 50) {
+          if (deltaX > 0) {
+            navigateToPrev();
+          } else {
+            navigateToNext();
+          }
+        }
+      }
+
+      function navigateToPrev() {
+        if (currentIndex > 0) {
+          const prevId = robotList[currentIndex - 1];
+          window.location.href = `/MedicairGeek/infoImpianto/robot/${prevId}`;
+        }
+      }
+
+      function navigateToNext() {
+        if (currentIndex < robotList.length - 1) {
+          const nextId = robotList[currentIndex + 1];
+          window.location.href = `/MedicairGeek/infoImpianto/robot/${nextId}`;
+        }
+      }
+
       document.querySelectorAll('tbody tr[data-detail="true"]').forEach((row) => {
         row.addEventListener('click', (event) => {
           if (event.target.closest('a')) return;
@@ -452,6 +504,10 @@
           closeModal();
         }
       });
+
+      // Add swipe event listeners
+      document.addEventListener('touchstart', handleTouchStart, { passive: true });
+      document.addEventListener('touchend', handleTouchEnd, { passive: true });
     })();
   </script>
 </body>
