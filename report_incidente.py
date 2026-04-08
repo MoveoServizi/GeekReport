@@ -12,7 +12,7 @@ from flask import Blueprint, jsonify, render_template, request, abort
 from openpyxl import Workbook, load_workbook
 from werkzeug.utils import secure_filename
 
-from config import DESTINATARI,DESTINATARI_ALL_REPORT, REPORT_BASE_DIR
+from config import DESTINATARI,DESTINATARI_EVENTI_RILIEVO, REPORT_BASE_DIR
 from email_sender import EmailSender
 from modelli_latex import cleanup_latex_tmp, crea_report
 
@@ -36,12 +36,22 @@ ALLOWED_EXT = {
 MAX_TITOLO_LEN = 30
 
 CATEGORIE_LIST = [
+    "Dissalineato Qr / Perso"
     "Incidente",
     "Incidente Grave",
     "Problema Software",
     "Problema Hardware",
     "Intervento Manutenzione",
+    "Intervento Manutenzione Straordinaria",
     "Altro",
+]
+
+EVENTI_RILIEVO = [
+    "Incidente Grave",
+    "Problema Software",
+    "Problema Hardware",
+    "Intervento Manutenzione",
+    "Intervento Manutenzione Straordinaria",
 ]
 
 ROBOT_LIST = [
@@ -767,11 +777,14 @@ def _run_job(job_id: str, payload: Dict[str, Any]) -> None:
         # ---- EMAIL
         _job_set(job_id, phase="EMAIL", percent=80, message="Invio email…")
 
-        destinari_email = list(DESTINATARI)
-        if categoria == "Incidente":
-            destinari_email = list(DESTINATARI_ALL_REPORT)
-        
+        if redatto_da == "NO_EMAIL":
+            destinatari_email = []
+        else:
+            destinatari_email = list(DESTINATARI)
 
+            if categoria in EVENTI_RILIEVO:
+                destinatari_email = list(set(destinatari_email) | set(DESTINATARI_EVENTI_RILIEVO))
+        
         try:
             email_attachments = [
                 p for p in saved_file_paths
@@ -785,7 +798,7 @@ def _run_job(job_id: str, payload: Dict[str, Any]) -> None:
                 categoria=categoria,
                 robots=robots,
                 note=descrizione,
-                destinatari=destinari_email,
+                destinatari=destinatari_email,
                 allegati=email_attachments,
             )
             if email_res.get("errors"):
