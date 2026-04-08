@@ -10,6 +10,7 @@ Nuova nomenclatura pagine:
 
 from __future__ import annotations
 
+import base64
 from datetime import datetime, timedelta
 from pathlib import Path
 
@@ -28,6 +29,7 @@ AUTH_ENABLED = False  # Imposta True per abilitare il login, False per bypassare
 LOGIN_EXEMPT = [
     "/MedicairGeek/login",
     "/MedicairGeek/logout",
+    "/MedicairGeek/quick-login",
     "/MedicairGeek/static/",
 ]
 
@@ -104,6 +106,40 @@ def create_app() -> Flask:
         if user:
             log_activity(f"logout | user={user} | ip={request.remote_addr}")
         return redirect(url_for("login"))
+
+    @app.get("/MedicairGeek/quick-login")
+    def quick_login():
+        """Quick login con credenziali codificate in base64.
+        
+        Parametro: token (base64 di username:password)
+        Esempio: /MedicairGeek/quick-login?token=T3BlcmF0b3JlOlJlcG9ydEdlZWs=
+        """
+        token = request.args.get("token", "").strip()
+        redirect_to = request.args.get("next", url_for("home"))
+
+        if not token:
+            log_activity(f"quick_login_failure | reason=no_token | ip={request.remote_addr}")
+            return redirect(url_for("login"))
+
+        try:
+            decoded = base64.b64decode(token).decode("utf-8")
+            if ":" not in decoded:
+                raise ValueError("Invalid token format")
+            
+            username, password = decoded.split(":", 1)
+            credentials = load_credentials()
+            
+            if username and password and credentials.get(username) == password:
+                session.permanent = True
+                session["user"] = username
+                log_activity(f"quick_login_success | user={username} | ip={request.remote_addr} | next={redirect_to}")
+                return redirect(redirect_to)
+            else:
+                log_activity(f"quick_login_failure | user={username or 'unknown'} | reason=invalid_credentials | ip={request.remote_addr}")
+                return redirect(url_for("login"))
+        except Exception as exc:
+            log_activity(f"quick_login_failure | reason=decode_error | error={str(exc)} | ip={request.remote_addr}")
+            return redirect(url_for("login"))
 
     try:
         ensure_info_impianto_cache()
