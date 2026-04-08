@@ -15,11 +15,13 @@
       --border:rgba(255,255,255,.10);
 
       --cat-incidente:#2ecc71;
+      --cat-dissalineato-qr:#6be89f;
       --cat-incidente-grave:#ff9f43;
       --cat-software:#9b59ff;
       --cat-hardware:#ff5a5a;
       --cat-altro:#4da3ff;
       --cat-manutenzione:#ffffff;
+      --cat-manutenzione-straordinaria:#ffe37a;
 
       --accent:#7cc4ff;
       --warning:#ffe37a;
@@ -151,10 +153,12 @@
     }
 
     .cat-incidente{ border-left-color:var(--cat-incidente); }
+    .cat-dissalineato-qr{ border-left-color:var(--cat-dissalineato-qr); }
     .cat-incidente-grave{ border-left-color:var(--cat-incidente-grave); }
     .cat-software{ border-left-color:var(--cat-software); }
     .cat-hardware{ border-left-color:var(--cat-hardware); }
     .cat-manutenzione{ border-left-color:var(--cat-manutenzione); }
+    .cat-manutenzione-straordinaria{ border-left-color:var(--cat-manutenzione-straordinaria); }
     .cat-altro{ border-left-color:var(--cat-altro); }
 
     .report-date{
@@ -314,10 +318,12 @@
         const v = String(cat || "").trim().toLowerCase();
 
         if(v === "incidente") return "cat-incidente";
+        if(v === "dissalineato qr / perso") return "cat-dissalineato-qr";
         if(v === "incidente grave") return "cat-incidente-grave";
         if(v === "problema software") return "cat-software";
         if(v === "problema hardware") return "cat-hardware";
         if(v === "intervento manutenzione") return "cat-manutenzione";
+        if(v === "intervento manutenzione straordinaria") return "cat-manutenzione-straordinaria";
         return "cat-altro";
       }
 

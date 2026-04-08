@@ -36,7 +36,7 @@ ALLOWED_EXT = {
 MAX_TITOLO_LEN = 30
 
 CATEGORIE_LIST = [
-    "Dissalineato Qr / Perso"
+    "Dissalineato Qr / Perso",
     "Incidente",
     "Incidente Grave",
     "Problema Software",

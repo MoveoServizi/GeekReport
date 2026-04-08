@@ -308,7 +308,7 @@ def _extract_replaced_part(row: Dict[str, Any]) -> str:
 
     categoria = _normalize_str(row.get("categoria")).lower()
     risoluzione = _normalize_str(row.get("risoluzione"))
-    if categoria == "intervento manutenzione" and risoluzione:
+    if categoria in ("intervento manutenzione", "intervento manutenzione straordinaria") and risoluzione:
         return _truncate(risoluzione, 120)
 
     return ""
@@ -448,7 +448,7 @@ def _build_robot_tables(robot: Dict[str, str], related_rows: Optional[List[Dict[
             }
         )
 
-        if _normalize_str(row.get("categoria")).lower() == "intervento manutenzione":
+        if _normalize_str(row.get("categoria")).lower() in ("intervento manutenzione", "intervento manutenzione straordinaria"):
             manutenzioni.append(
                 {
                     "data": data_label,

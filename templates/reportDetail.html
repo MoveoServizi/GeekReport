@@ -15,11 +15,13 @@
       --border:rgba(255,255,255,.10);
 
       --cat-incidente:#2ecc71;
+      --cat-dissalineato-qr:#6be89f;
       --cat-incidente-grave:#ff9f43;
       --cat-software:#9b59ff;
       --cat-hardware:#ff5a5a;
       --cat-altro:#4da3ff;
       --cat-manutenzione:#ffffff;
+      --cat-manutenzione-straordinaria:#ffe37a;
 
       --accent:#7cc4ff;
       --warning:#ffe37a;
@@ -132,11 +134,13 @@
     }
 
     .cat-incidente{ border-left-color:var(--cat-incidente); }
+    .cat-dissalineato-qr{ border-left-color:var(--cat-dissalineato-qr); }
     .cat-incidente-grave{ border-left-color:var(--cat-incidente-grave); }
     .cat-software{ border-left-color:var(--cat-software); }
     .cat-hardware{ border-left-color:var(--cat-hardware); }
     .cat-altro{ border-left-color:var(--cat-altro); }
     .cat-manutenzione{ border-left-color:var(--cat-manutenzione); }
+    .cat-manutenzione-straordinaria{ border-left-color:var(--cat-manutenzione-straordinaria); }
 
     .hero-date{
       font-size:18px;
@@ -183,6 +187,7 @@
     }
 
     .dot-incidente{ background:var(--cat-incidente); }
+    .dot-dissalineato-qr{ background:var(--cat-dissalineato-qr); }
     .dot-incidente-grave{ background:var(--cat-incidente-grave); }
     .dot-software{ background:var(--cat-software); }
     .dot-hardware{ background:var(--cat-hardware); }
@@ -191,6 +196,7 @@
       background:var(--cat-manutenzione);
       border:1px solid rgba(0,0,0,.35);
     }
+    .dot-manutenzione-straordinaria{ background:var(--cat-manutenzione-straordinaria); }
 
     .sectionTitle{
       margin:12px 0 8px;
@@ -619,11 +625,13 @@
         <div class="field">
           <label for="fCategoria">Categoria</label>
           <select id="fCategoria" class="select">
+            <option value="Dissalineato Qr / Perso">Dissalineato Qr / Perso</option>
             <option value="Incidente">Incidente</option>
             <option value="Incidente Grave">Incidente Grave</option>
             <option value="Problema Software">Problema Software</option>
             <option value="Problema Hardware">Problema Hardware</option>
             <option value="Intervento Manutenzione">Intervento Manutenzione</option>
+            <option value="Intervento Manutenzione Straordinaria">Intervento Manutenzione Straordinaria</option>
             <option value="Altro">Altro</option>
           </select>
         </div>
@@ -888,6 +896,9 @@
     function categoriaInfo(value){
       const v = String(value || "").trim().toLowerCase();
 
+      if(v === "dissalineato qr / perso"){
+        return { heroClass: "cat-dissalineato-qr", dotClass: "dot-dissalineato-qr", label: "Dissalineato Qr / Perso" };
+      }
       if(v === "incidente"){
         return { heroClass: "cat-incidente", dotClass: "dot-incidente", label: "Incidente" };
       }
@@ -903,6 +914,9 @@
       if(v === "intervento manutenzione"){
         return { heroClass: "cat-manutenzione", dotClass: "dot-manutenzione", label: "Intervento Manutenzione" };
       }
+      if(v === "intervento manutenzione straordinaria"){
+        return { heroClass: "cat-manutenzione-straordinaria", dotClass: "dot-manutenzione-straordinaria", label: "Intervento Manutenzione Straordinaria" };
+      }
       return { heroClass: "cat-altro", dotClass: "dot-altro", label: value || "Altro" };
     }
 
@@ -911,11 +925,13 @@
 
       hero.classList.remove(
         "cat-incidente",
+        "cat-dissalineato-qr",
         "cat-incidente-grave",
         "cat-software",
         "cat-hardware",
         "cat-altro",
-        "cat-manutenzione"
+        "cat-manutenzione",
+        "cat-manutenzione-straordinaria"
       );
       hero.classList.add(info.heroClass);
 
