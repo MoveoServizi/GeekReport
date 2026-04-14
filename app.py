@@ -6,6 +6,7 @@ Nuova nomenclatura pagine:
 - /MedicairGeek/reportIncidente -> Report incidenti (Blueprint: report_incidente_bp)
 - /MedicairGeek/reportIntervento -> Report intervento (placeholder, templates/reportIntervento.html)
 - /MedicairGeek/storicoReport  -> Storico Report (Blueprint: consulta_report_bp)
+- /MedicairGeek/disallineamentoQr -> Disallineamento QR (Blueprint: disallineamento_qr_bp)
 """
 
 from __future__ import annotations
@@ -20,12 +21,13 @@ from log_utils import log_activity
 from report_incidente import report_incidente_bp
 from consulta_report import consulta_report_bp
 from info_impianto import ensure_info_impianto_cache, info_impianto_bp
+from disallineamento_qr import disallineamento_qr_bp
 
 
 BASE_DIR = Path(__file__).resolve().parent
 CREDENTIALS_FILE = BASE_DIR / "credentials.txt"
 AUTH_ENABLED = False  # Imposta True per abilitare il login, False per bypassare l'autenticazione
-
+#Operatore:ReportGeek --> http://localhost:3570/MedicairGeek/quick-login?token=T3BlcmF0b3JlOlJlcG9ydEdlZWs=  
 LOGIN_EXEMPT = [
     "/MedicairGeek/login",
     "/MedicairGeek/logout",
@@ -154,6 +156,9 @@ def create_app() -> Flask:
 
     # Blueprint: info impianto
     app.register_blueprint(info_impianto_bp)
+
+    # Blueprint: disallineamento QR
+    app.register_blueprint(disallineamento_qr_bp)
 
     # Home
     @app.get("/MedicairGeek")

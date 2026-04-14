@@ -66,6 +66,31 @@
       cursor:pointer;
     }
     .error{ margin:0 0 14px; color:var(--danger); font-size:14px; }
+    .error-banner{
+      margin:0 0 20px;
+      padding:14px 16px;
+      border-radius:14px;
+      border:1.5px solid rgba(255,107,107,.45);
+      background:linear-gradient(180deg, rgba(255,107,107,.15), rgba(255,107,107,.08));
+      color:#ffd7d7;
+      font-size:14px;
+      font-weight:600;
+      letter-spacing:.3px;
+      display:flex;
+      align-items:center;
+      gap:10px;
+      animation:bannerShake .4s ease-in-out;
+    }
+    .error-banner::before{
+      content:"⚠";
+      font-size:20px;
+      flex:0 0 auto;
+    }
+    @keyframes bannerShake{
+      0%, 100%{ transform:translateX(0); }
+      25%{ transform:translateX(-6px); }
+      75%{ transform:translateX(6px); }
+    }
     .hint{ margin-top:16px; color:var(--muted); font-size:13px; line-height:1.5; }
   </style>
 </head>
@@ -79,7 +104,7 @@
       </div>
 
       {% if error %}
-      <p class="error">{{ error }}</p>
+      <div class="error-banner">{{ error }}</div>
       {% endif %}
 
       <form method="post" action="{{ url_for('login') }}">
