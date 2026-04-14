@@ -75,15 +75,15 @@ def _categorize_event(categoria: str, titolo: str, parti_coinvolte: str) -> str 
     
     # Interventi di manutenzione
     if "intervento manutenzione" in categoria_lower:
-        # Update Firmware
-        if "firware" in parti_lower:
-            return EVENT_TYPE_FW
-        # Cambio MCU
-        if "scheda madre" in titolo_lower or "scheda madre" in parti_lower and "mcu" in (titolo_lower + parti_lower):
-            return EVENT_TYPE_MCU
         # Cambio Batteria
         if "batteria" in titolo_lower or "batteria" in parti_lower:
             return EVENT_TYPE_BAT
+        # Firmware Update
+        if "firm" in titolo_lower or "firm" in parti_lower or "firmare" in titolo_lower:
+            return EVENT_TYPE_FW
+        # Cambio MCU
+        if "scheda madre" in titolo_lower or "scheda madre" in parti_lower or "mcu" in titolo_lower or "mcu" in parti_lower:
+            return EVENT_TYPE_MCU
     
     return None
 
@@ -163,13 +163,14 @@ def _read_events_from_excel() -> List[Dict[str, Any]]:
     return events
 
 
-def _build_robot_events_table() -> tuple[List[str], Dict[str, List[Dict[str, Any]]], List[str]]:
+def _build_robot_events_table() -> tuple[List[str], Dict[str, List[Dict[str, Any]]], List[str], Dict[str, Dict[str, int]]]:
     """Costruisce la tabella degli eventi per i robot.
     
     Ritorna:
     - robots_list: lista ordinata degli ID robot che hanno eventi
-    - robot_data: dict {robot_id: [{date_str, date, event_type, titolo}, ...]}
+    - robot_data: dict {robot_id: [{date_str, date, event_type, titolo, label}, ...]}
     - unique_dates_sorted: lista di tutte le date uniche ordinate (più recenti prima)
+    - robot_summary: dict {robot_id: {fw: count, mcu: count, bat: count}}
     """
     events = _read_events_from_excel()
     
@@ -199,18 +200,44 @@ def _build_robot_events_table() -> tuple[List[str], Dict[str, List[Dict[str, Any
                                  key=lambda d: _parse_date(d), 
                                  reverse=True)
     
-    # Ordina gli eventi per ogni robot per data (più recenti prima)
-    for robot_events in robot_data.values():
+    robot_summary: Dict[str, Dict[str, int]] = {}
+    
+    # Ordina gli eventi per ogni robot per data e assegna numeri progressivi per tipo
+    for robot_id, robot_events in robot_data.items():
+        robot_events.sort(key=lambda e: e["date"])
+        counters = {EVENT_TYPE_QR: 0, EVENT_TYPE_FW: 0, EVENT_TYPE_MCU: 0, EVENT_TYPE_BAT: 0}
+        
+        for event in robot_events:
+            counters[event["event_type"]] += 1
+            label = event["event_type"].upper()
+            if event["event_type"] == EVENT_TYPE_QR:
+                label = f"QR{counters[event['event_type']]}"
+            elif event["event_type"] == EVENT_TYPE_FW:
+                label = f"FW{counters[event['event_type']]}"
+            elif event["event_type"] == EVENT_TYPE_MCU:
+                label = f"MCU{counters[event['event_type']]}"
+            elif event["event_type"] == EVENT_TYPE_BAT:
+                label = f"BAT{counters[event['event_type']]}"
+            event["label"] = label
+        
+        # Salva il riepilogo dei tipi per la riga robot
+        robot_summary[robot_id] = {
+            EVENT_TYPE_FW: counters[EVENT_TYPE_FW],
+            EVENT_TYPE_MCU: counters[EVENT_TYPE_MCU],
+            EVENT_TYPE_BAT: counters[EVENT_TYPE_BAT],
+        }
+        
+        # Ordina gli eventi per visualizzazione in tabella (più recenti prima)
         robot_events.sort(key=lambda e: e["date"], reverse=True)
     
-    return robots_list, robot_data, unique_dates_sorted
+    return robots_list, robot_data, unique_dates_sorted, robot_summary
 
 
 @disallineamento_qr_bp.get("/MedicairGeek/disallineamentoQr")
 @disallineamento_qr_bp.get("/disallineamento-qr")
 def disallineamento_qr_page():
     """Pagina principale disallineamento QR."""
-    robots_list, robot_data, unique_dates = _build_robot_events_table()
+    robots_list, robot_data, unique_dates, robot_summary = _build_robot_events_table()
     log_activity(f"view | page=disallineamentoQr | ip={request.remote_addr}")
     
     return render_template(
@@ -220,19 +247,14 @@ def disallineamento_qr_page():
         robots_list=robots_list,
         robot_data=robot_data,
         unique_dates=unique_dates,
-        event_types={
-            "qr": {"label": "QR", "color": "#e74c3c", "symbol": "🔴"},
-            "fw": {"label": "FW", "color": "#3498db", "symbol": "🔵"},
-            "mcu": {"label": "MCU", "color": "#f39c12", "symbol": "🟡"},
-            "bat": {"label": "BAT", "color": "#2ecc71", "symbol": "🟢"},
-        },
+        robot_summary=robot_summary,
     )
 
 
 @disallineamento_qr_bp.get("/MedicairGeek/DisallineamentoQR/data")
 def api_disallineamento_qr_data():
     """API per ottenere i dati in JSON."""
-    robots_list, robot_data, unique_dates = _build_robot_events_table()
+    robots_list, robot_data, unique_dates, robot_summary = _build_robot_events_table()
     
     # Formatta per JSON
     out = {}
@@ -243,6 +265,7 @@ def api_disallineamento_qr_data():
                 out[robot_id].append({
                     "date": event["date_str"],
                     "event_type": event["event_type"],
+                    "label": event.get("label", ""),
                     "titolo": event["titolo"],
                 })
     
@@ -250,5 +273,6 @@ def api_disallineamento_qr_data():
         "ok": True,
         "robots": robots_list,
         "unique_dates": unique_dates,
+        "summary": robot_summary,
         "data": out
     })

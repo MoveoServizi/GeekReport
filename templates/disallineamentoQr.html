@@ -140,8 +140,12 @@
 
     th:first-child {
       text-align: left;
-      min-width: 90px;
+      min-width: 160px;
       max-width: none;
+      position: sticky;
+      left: 0;
+      z-index: 3;
+      background: rgba(11,15,20,.97);
     }
 
     td {
@@ -155,29 +159,67 @@
       text-align: left;
       font-weight: 900;
       color: var(--accent);
-      min-width: 90px;
+      min-width: 160px;
+      position: sticky;
+      left: 0;
+      background: rgba(15,22,32,.96);
+      z-index: 2;
+      box-shadow: 8px 0 16px rgba(0,0,0,.18);
     }
 
     tbody tr:hover {
       background: rgba(255,255,255,.02);
     }
 
-    .event-cell {
-      position: relative;
+    .robot-first-col {
       display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .summary-badges {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 6px;
+    }
+
+    .summary-badge {
+      display: inline-flex;
       align-items: center;
       justify-content: center;
-      height: 45px;
+      padding: 4px 8px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 800;
+      color: white;
+      letter-spacing: .2px;
+      white-space: nowrap;
+    }
+
+    .summary-badge.fw { background: var(--color-fw); }
+    .summary-badge.mcu { background: var(--color-mcu); }
+    .summary-badge.bat { background: var(--color-bat); }
+
+    .event-cell {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      align-items: center;
+      gap: 6px;
+      min-height: 45px;
+      padding: 4px 0;
     }
 
     .event-dot {
-      width: 24px;
-      height: 24px;
-      border-radius: 50%;
-      display: flex;
+      min-width: 40px;
+      height: 28px;
+      padding: 0 8px;
+      border-radius: 999px;
+      display: inline-flex;
       align-items: center;
       justify-content: center;
-      font-size: 10px;
+      font-size: 11px;
       font-weight: 900;
       cursor: pointer;
       transition: transform 0.2s ease;
@@ -338,7 +380,21 @@
             <tbody>
               {% for robot_id in robots_list %}
                 <tr>
-                  <td>{{ robot_id }}</td>
+                  <td class="robot-first-col">
+                    <div>{{ robot_id }}</div>
+                    <div class="summary-badges">
+                      {% set summary = robot_summary.get(robot_id, {}) %}
+                      {% if summary.fw %}
+                        <span class="summary-badge fw">FW{{ summary.fw }}</span>
+                      {% endif %}
+                      {% if summary.mcu %}
+                        <span class="summary-badge mcu">MCU{{ summary.mcu }}</span>
+                      {% endif %}
+                      {% if summary.bat %}
+                        <span class="summary-badge bat">BAT{{ summary.bat }}</span>
+                      {% endif %}
+                    </div>
+                  </td>
                   {% for date in unique_dates %}
                     <td>
                       {% set events_on_date = [] %}
@@ -351,16 +407,13 @@
                       {% endif %}
 
                       {% if events_on_date %}
-                        {% set event = events_on_date[0] %}
                         <div class="event-cell">
-                          <div class="event-dot" data-type="{{ event.event_type }}">
-                            {% if event.event_type == 'qr' %}QR
-                            {% elif event.event_type == 'fw' %}FW
-                            {% elif event.event_type == 'mcu' %}MCU
-                            {% elif event.event_type == 'bat' %}BAT
-                            {% endif %}
-                            <div class="event-tooltip">{{ event.titolo }}</div>
-                          </div>
+                          {% for event in events_on_date %}
+                            <div class="event-dot" data-type="{{ event.event_type }}">
+                              {{ event.label }}
+                              <div class="event-tooltip">{{ event.titolo }}</div>
+                            </div>
+                          {% endfor %}
                         </div>
                       {% else %}
                         <div class="empty-cell">-</div>
@@ -382,991 +435,6 @@
         </div>
       </div>
     {% endif %}
-  </div>
-</body>
-</html>
-<!doctype html>
-<html lang="it">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>{{ title or "Disallineamento QR" }}</title>
-  <link rel="icon" href="{{ url_for('static', filename='img/CUBO.png') }}">
-  <link rel="shortcut icon" href="{{ url_for('static', filename='img/CUBO.png') }}">
-  <style>
-    :root{
-      --bg:#0b0f14;
-      --card:#0f1620;
-      --muted:#9fb0c0;
-      --text:#e8eef6;
-      --border:rgba(255,255,255,.10);
-
-      --accent:#7cc4ff;
-      --warning:#ffe37a;
-      --danger:#ff8f8f;
-      --ok:#7ce3a1;
-
-      --event-qr:#78c800;
-      --event-fw:#5aaaf5;
-      --event-hw:#d501ff;
-      --event-bat:#f08a5d;
-
-      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-    }
-
-    *{ box-sizing:border-box; }
-
-    body{
-      margin:0;
-      background:
-        radial-gradient(1200px 500px at 20% -10%, rgba(124,196,255,.18), transparent 60%),
-        radial-gradient(900px 500px at 110% 10%, rgba(77,163,255,.10), transparent 55%),
-        var(--bg);
-      color:var(--text);
-    }
-
-    .wrap{
-      width:min(1400px, 94vw);
-      margin:0 auto;
-      padding:16px 14px 26px;
-    }
-
-    .top{
-      display:flex;
-      align-items:center;
-      gap:12px;
-      margin-bottom:24px;
-    }
-
-    .logo{
-      width:56px;
-      height:56px;
-      border-radius:14px;
-      object-fit:contain;
-      background:rgba(255,255,255,.05);
-      border:1px solid rgba(255,255,255,.08);
-      padding:6px;
-      flex:0 0 auto;
-    }
-
-    .header-text{
-      flex:1;
-    }
-
-    h1{
-      margin:0;
-      font-size:20px;
-      letter-spacing:.2px;
-    }
-
-    .sub{
-      margin:3px 0 0;
-      font-size:13px;
-      color:var(--muted);
-    }
-
-    .section{
-      margin-bottom:32px;
-    }
-
-    .section-title{
-      font-size:16px;
-      font-weight:900;
-      margin-bottom:12px;
-      color:var(--accent);
-      text-transform:uppercase;
-      letter-spacing:.5px;
-    }
-
-    .table-container{
-      background:linear-gradient(180deg, rgba(255,255,255,.03), transparent 55%), var(--card);
-      border:1px solid var(--border);
-      border-radius:18px;
-      padding:18px;
-      box-shadow:0 14px 40px rgba(0,0,0,.45);
-      overflow-x:auto;
-    }
-
-    table{
-      width:100%;
-      border-collapse:collapse;
-      font-size:13px;
-    }
-
-    thead{
-      background:rgba(255,255,255,.05);
-      font-weight:900;
-      letter-spacing:.3px;
-      text-transform:uppercase;
-    }
-
-    th{
-      padding:12px 8px;
-      text-align:left;
-      border-bottom:1px solid var(--border);
-      color:var(--accent);
-    }
-
-    td{
-      padding:8px;
-      border-bottom:1px solid rgba(255,255,255,.03);
-      vertical-align:top;
-    }
-
-    tbody tr:hover{
-      background:rgba(255,255,255,.02);
-    }
-
-    .robot-id{
-      font-weight:900;
-      color:var(--accent);
-      min-width:80px;
-      font-size:14px;
-    }
-
-    .events-cell{
-      min-width:200px;
-    }
-
-    .event-item{
-      display:inline-flex;
-      align-items:center;
-      gap:6px;
-      margin:2px 4px 2px 0;
-      padding:4px 8px;
-      border-radius:6px;
-      background:rgba(255,255,255,.05);
-      border:1px solid rgba(255,255,255,.08);
-      font-size:11px;
-      white-space:nowrap;
-    }
-
-    .event-date{
-      font-weight:900;
-      color:var(--text);
-    }
-
-    .event-type{
-      display:inline-block;
-      padding:1px 6px;
-      border-radius:4px;
-      font-size:9px;
-      font-weight:900;
-      letter-spacing:.3px;
-      text-transform:uppercase;
-    }
-
-    .event-type.qr{
-      background:rgba(120,200,0,.25);
-      color:#78c800;
-      border:1px solid rgba(120,200,0,.4);
-    }
-
-    .event-type.fw{
-      background:rgba(92,170,245,.25);
-      color:#5aaaf5;
-      border:1px solid rgba(92,170,245,.4);
-    }
-
-    .event-type.hw{
-      background:rgba(215,1,255,.25);
-      color:#d501ff;
-      border:1px solid rgba(215,1,255,.4);
-    }
-
-    .event-type.bat{
-      background:rgba(255,138,93,.25);
-      color:#f08a5d;
-      border:1px solid rgba(255,138,93,.4);
-    }
-
-    .stats-number{
-      font-weight:900;
-      font-size:14px;
-      text-align:center;
-      color:var(--accent);
-    }
-
-    .empty-cell{
-      color:var(--muted);
-      text-align:center;
-      font-style:italic;
-    }
-
-    .back-link{
-      display:inline-flex;
-      align-items:center;
-      gap:6px;
-      padding:10px 14px;
-      border-radius:12px;
-      border:1px solid rgba(124,196,255,.24);
-      background:linear-gradient(180deg, rgba(124,196,255,.12), rgba(124,196,255,.05));
-      color:var(--accent);
-      text-decoration:none;
-      font-size:13px;
-      font-weight:800;
-      letter-spacing:.2px;
-      margin-bottom:16px;
-      transition:all .14s ease;
-    }
-
-    .back-link:hover{
-      background:linear-gradient(180deg, rgba(124,196,255,.18), rgba(124,196,255,.08));
-    }
-
-    @media (max-width:768px){
-      .table-container{
-        padding:10px;
-      }
-      table{
-        font-size:12px;
-      }
-      th, td{
-        padding:6px 4px;
-      }
-      .event-item{
-        font-size:10px;
-        margin:1px 2px 1px 0;
-        padding:3px 6px;
-      }
-    }
-  </style>
-</head>
-<body>
-  <div class="wrap">
-    <a href="{{ url_for('home') }}" class="back-link">← Torna alla home</a>
-
-    <div class="top">
-      <img class="logo" src="{{ url_for('static', filename='img/CUBO.png') }}" alt="Logo">
-      <div class="header-text">
-        <h1>{{ title }}</h1>
-        <p class="sub">Cronologia eventi e statistiche per robot • Dati da settembre</p>
-      </div>
-    </div>
-
-    {% if robots_data %}
-      <!-- Tabella principale: cronologia eventi per robot -->
-      <div class="section">
-        <div class="section-title">📅 Cronologia Eventi per Robot</div>
-        <div class="table-container">
-          <table>
-            <thead>
-              <tr>
-                <th>ID Robot</th>
-                <th>Eventi Cronologici</th>
-              </tr>
-            </thead>
-            <tbody>
-              {% for robot_id in robot_ids %}
-                {% if robot_id in robots_data %}
-                  {% set robot_data = robots_data[robot_id] %}
-                  <tr>
-                    <td class="robot-id">{{ robot_id }}</td>
-                    <td class="events-cell">
-                      {% set all_events = [] %}
-                      {% for cat, events in robot_data.items() %}
-                        {% for event in events %}
-                          {% set _ = all_events.append({'event': event, 'type': cat}) %}
-                        {% endfor %}
-                      {% endfor %}
-                      {% set all_events = all_events | sort(attribute='event.date_obj') %}
-
-                      {% if all_events %}
-                        {% for item in all_events %}
-                          {% set event = item.event %}
-                          {% set event_type = item.type %}
-                          <span class="event-item">
-                            <span class="event-date">{{ event.data }}</span>
-                            <span class="event-type
-                              {% if event_type == 'disallineamento_qr' %}qr
-                              {% elif event_type == 'firmware_update' %}fw
-                              {% elif event_type == 'hw_mother' %}hw
-                              {% elif event_type == 'hw_battery' %}bat
-                              {% endif %}">
-                              {% if event_type == 'disallineamento_qr' %}QR
-                              {% elif event_type == 'firmware_update' %}FW
-                              {% elif event_type == 'hw_mother' %}MCU
-                              {% elif event_type == 'hw_battery' %}BAT
-                              {% endif %}
-                            </span>
-                          </span>
-                        {% endfor %}
-                      {% else %}
-                        <span class="empty-cell">— Nessun evento —</span>
-                      {% endif %}
-                    </td>
-                  </tr>
-                {% endif %}
-              {% endfor %}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      <!-- Tabella statistiche -->
-      <div class="section">
-        <div class="section-title">📊 Statistiche Incidenti</div>
-        <div class="table-container">
-          <table>
-            <thead>
-              <tr>
-                <th>ID Robot</th>
-                <th>Incidenti Totali</th>
-                <th>Incidenti Post Firmware</th>
-                <th>Incidenti Post Hardware</th>
-              </tr>
-            </thead>
-            <tbody>
-              {% for robot_id in robot_ids %}
-                {% if robot_id in stats %}
-                  {% set robot_stats = stats[robot_id] %}
-                  <tr>
-                    <td class="robot-id">{{ robot_id }}</td>
-                    <td class="stats-number">{{ robot_stats.total_incidents }}</td>
-                    <td class="stats-number">{{ robot_stats.incidents_after_firmware }}</td>
-                    <td class="stats-number">{{ robot_stats.incidents_after_hw_replacement }}</td>
-                  </tr>
-                {% endif %}
-              {% endfor %}
-            </tbody>
-          </table>
-        </div>
-      </div>
-    {% else %}
-      <div class="table-container">
-        <div style="padding:24px; text-align:center; color:var(--muted);">
-          Nessun dato disponibile
-        </div>
-      </div>
-    {% endif %}
-  </div>
-</body>
-</html><!doctype html>
-<html lang="it">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>{{ title or "Disallineamento QR" }}</title>
-  <link rel="icon" href="{{ url_for('static', filename='img/CUBO.png') }}">
-  <link rel="shortcut icon" href="{{ url_for('static', filename='img/CUBO.png') }}">
-  <style>
-    :root{
-      --bg:#0b0f14;
-      --card:#0f1620;
-      --muted:#9fb0c0;
-      --text:#e8eef6;
-      --border:rgba(255,255,255,.10);
-
-      --cat-incidente:#f6c23e;
-      --cat-dissalineato-qr:#78c800;
-      --cat-incidente-grave:#ea4335;
-      --cat-software:#f71cd9;
-      --cat-hardware:#d501ff;
-      --cat-manutenzione:#5aaaf5;
-      --cat-manutenzione-straordinaria:#f08a5d;
-      --cat-altro:#adb5bd;
-
-      --accent:#7cc4ff;
-      --warning:#ffe37a;
-      --danger:#ff8f8f;
-      --ok:#7ce3a1;
-
-      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-    }
-
-    *{ box-sizing:border-box; }
-
-    body{
-      margin:0;
-      background:
-        radial-gradient(1200px 500px at 20% -10%, rgba(124,196,255,.18), transparent 60%),
-        radial-gradient(900px 500px at 110% 10%, rgba(77,163,255,.10), transparent 55%),
-        var(--bg);
-      color:var(--text);
-    }
-
-    .wrap{
-      width:min(1200px, 94vw);
-      margin:0 auto;
-      padding:16px 14px 26px;
-    }
-
-    .top{
-      display:flex;
-      align-items:center;
-      gap:12px;
-      margin-bottom:24px;
-    }
-
-    .logo{
-      width:56px;
-      height:56px;
-      border-radius:14px;
-      object-fit:contain;
-      background:rgba(255,255,255,.05);
-      border:1px solid rgba(255,255,255,.08);
-      padding:6px;
-      flex:0 0 auto;
-    }
-
-    .header-text{
-      flex:1;
-    }
-
-    h1{
-      margin:0;
-      font-size:20px;
-      letter-spacing:.2px;
-    }
-
-    .sub{
-      margin:3px 0 0;
-      font-size:13px;
-      color:var(--muted);
-    }
-
-    .table-container{
-      background:linear-gradient(180deg, rgba(255,255,255,.03), transparent 55%), var(--card);
-      border:1px solid var(--border);
-      border-radius:18px;
-      padding:18px;
-      box-shadow:0 14px 40px rgba(0,0,0,.45);
-      overflow-x:auto;
-    }
-
-    table{
-      width:100%;
-      border-collapse:collapse;
-      font-size:13px;
-    }
-
-    thead{
-      background:rgba(255,255,255,.05);
-      font-weight:900;
-      letter-spacing:.3px;
-      text-transform:uppercase;
-    }
-
-    th{
-      padding:12px 10px;
-      text-align:left;
-      border-bottom:1px solid var(--border);
-      color:var(--accent);
-    }
-
-    td{
-      padding:10px;
-      border-bottom:1px solid rgba(255,255,255,.03);
-    }
-
-    tbody tr:hover{
-      background:rgba(255,255,255,.02);
-    }
-
-    .robot-id{
-      font-weight:900;
-      color:var(--accent);
-      min-width:80px;
-    }
-
-    .event-cell{
-      display:flex;
-      flex-direction:column;
-      gap:6px;
-      padding:8px 10px;
-    }
-
-    .event-item{
-      display:flex;
-      align-items:flex-start;
-      gap:8px;
-      padding:6px 8px;
-      border-radius:8px;
-      background:rgba(255,255,255,.02);
-      border:1px solid rgba(255,255,255,.06);
-      font-size:12px;
-    }
-
-    .event-date{
-      font-weight:900;
-      min-width:75px;
-      color:var(--text);
-    }
-
-    .event-type{
-      display:inline-block;
-      padding:2px 8px;
-      border-radius:6px;
-      font-size:10px;
-      font-weight:900;
-      letter-spacing:.2px;
-      white-space:nowrap;
-      margin-bottom:2px;
-    }
-
-    .event-type.disallineamento_qr{
-      background:rgba(120,200,0,.25);
-      color:#78c800;
-      border:1px solid rgba(120,200,0,.4);
-    }
-
-    .event-type.firmware_update{
-      background:rgba(92,170,245,.25);
-      color:#5aaaf5;
-      border:1px solid rgba(92,170,245,.4);
-    }
-
-    .event-type.hw_mother{
-      background:rgba(215,1,255,.25);
-      color:#d501ff;
-      border:1px solid rgba(215,1,255,.4);
-    }
-
-    .event-type.hw_battery{
-      background:rgba(255,138,93,.25);
-      color:#f08a5d;
-      border:1px solid rgba(255,138,93,.4);
-    }
-
-    .empty-cell{
-      color:var(--muted);
-      text-align:center;
-      padding:12px 10px;
-    }
-
-    .label{
-      font-size:11px;
-      text-transform:uppercase;
-      letter-spacing:.3px;
-      font-weight:900;
-      color:var(--muted);
-      margin-bottom:4px;
-      display:block;
-    }
-
-    .no-data{
-      padding:24px;
-      text-align:center;
-      color:var(--muted);
-      border-radius:14px;
-      border:1px dashed var(--border);
-    }
-
-    .event-title{
-      font-weight:700;
-      color:var(--text);
-      display:block;
-      margin-top:2px;
-      font-size:11px;
-    }
-
-    .back-link{
-      display:inline-flex;
-      align-items:center;
-      gap:6px;
-      padding:10px 14px;
-      border-radius:12px;
-      border:1px solid rgba(124,196,255,.24);
-      background:linear-gradient(180deg, rgba(124,196,255,.12), rgba(124,196,255,.05));
-      color:var(--accent);
-      text-decoration:none;
-      font-size:13px;
-      font-weight:800;
-      letter-spacing:.2px;
-      margin-bottom:16px;
-      transition:all .14s ease;
-    }
-
-    .back-link:hover{
-      background:linear-gradient(180deg, rgba(124,196,255,.18), rgba(124,196,255,.08));
-    }
-
-    @media (max-width:768px){
-      .table-container{
-        padding:10px;
-      }
-      table{
-        font-size:12px;
-      }
-      th, td{
-        padding:8px 6px;
-      }
-      .robot-id{
-        min-width:60px;
-      }
-      .event-item{
-        font-size:11px;
-        flex-direction:column;
-      }
-      .event-date{
-        min-width:auto;
-      }
-    }
-  </style>
-</head>
-<body>
-  <div class="wrap">
-    <a href="{{ url_for('home') }}" class="back-link">← Torna alla home</a>
-
-    <div class="top">
-      <img class="logo" src="{{ url_for('static', filename='img/CUBO.png') }}" alt="Logo">
-      <div class="header-text">
-        <h1>{{ title }}</h1>
-        <p class="sub">Storico eventi QR, firmware, hardware • Dati da settembre</p>
-      </div>
-    </div>
-
-    {% if robots_data %}
-      <div class="table-container">
-        <table>
-          <thead>
-            <tr>
-              <th>ID Robot</th>
-              <th>Disallineamento QR</th>
-              <th>Update Firmware</th>
-              <th>Sostituzione Scheda Madre</th>
-              <th>Sostituzione Batteria/Motore</th>
-            </tr>
-          </thead>
-          <tbody>
-            {% for robot_id in robot_ids %}
-              {% if robot_id in robots_data %}
-                {% set robot_data = robots_data[robot_id] %}
-                <tr>
-                  <td class="robot-id">{{ robot_id }}</td>
-                  
-                  <!-- Disallineamento QR -->
-                  <td>
-                    {% if robot_data.disallineamento_qr %}
-                      <div class="event-cell">
-                        {% for event in robot_data.disallineamento_qr[:5] %}
-                          <div class="event-item">
-                            <div>
-                              <span class="event-type disallineamento_qr">QR</span>
-                              <div class="event-date">{{ event.data }}</div>
-                              <span class="event-title">{{ event.titolo[:40] }}{% if event.titolo|length > 40 %}...{% endif %}</span>
-                            </div>
-                          </div>
-                        {% endfor %}
-                        {% if robot_data.disallineamento_qr|length > 5 %}
-                          <div style="padding:6px; color:var(--muted); font-size:11px; text-align:center;">
-                            +{{ robot_data.disallineamento_qr|length - 5 }} altri
-                          </div>
-                        {% endif %}
-                      </div>
-                    {% else %}
-                      <div class="empty-cell">—</div>
-                    {% endif %}
-                  </td>
-
-                  <!-- Firmware Update -->
-                  <td>
-                    {% if robot_data.firmware_update %}
-                      <div class="event-cell">
-                        {% for event in robot_data.firmware_update[:5] %}
-                          <div class="event-item">
-                            <div>
-                              <span class="event-type firmware_update">FW</span>
-                              <div class="event-date">{{ event.data }}</div>
-                              <span class="event-title">{{ event.update1 or event.update2 }}</span>
-                            </div>
-                          </div>
-                        {% endfor %}
-                        {% if robot_data.firmware_update|length > 5 %}
-                          <div style="padding:6px; color:var(--muted); font-size:11px; text-align:center;">
-                            +{{ robot_data.firmware_update|length - 5 }} altri
-                          </div>
-                        {% endif %}
-                      </div>
-                    {% else %}
-                      <div class="empty-cell">—</div>
-                    {% endif %}
-                  </td>
-
-                  <!-- Scheda Madre -->
-                  <td>
-                    {% if robot_data.hw_mother %}
-                      <div class="event-cell">
-                        {% for event in robot_data.hw_mother[:5] %}
-                          <div class="event-item">
-                            <div>
-                              <span class="event-type hw_mother">MB</span>
-                              <div class="event-date">{{ event.data }}</div>
-                              <span class="event-title">{{ event.titolo[:35] }}{% if event.titolo|length > 35 %}...{% endif %}</span>
-                            </div>
-                          </div>
-                        {% endfor %}
-                        {% if robot_data.hw_mother|length > 5 %}
-                          <div style="padding:6px; color:var(--muted); font-size:11px; text-align:center;">
-                            +{{ robot_data.hw_mother|length - 5 }} altri
-                          </div>
-                        {% endif %}
-                      </div>
-                    {% else %}
-                      <div class="empty-cell">—</div>
-                    {% endif %}
-                  </td>
-
-                  <!-- Batteria / Motore Sollevamento -->
-                  <td>
-                    {% if robot_data.hw_battery %}
-                      <div class="event-cell">
-                        {% for event in robot_data.hw_battery[:5] %}
-                          <div class="event-item">
-                            <div>
-                              <span class="event-type hw_battery">BAT</span>
-                              <div class="event-date">{{ event.data }}</div>
-                              <span class="event-title">{{ event.titolo[:35] }}{% if event.titolo|length > 35 %}...{% endif %}</span>
-                            </div>
-                          </div>
-                        {% endfor %}
-                        {% if robot_data.hw_battery|length > 5 %}
-                          <div style="padding:6px; color:var(--muted); font-size:11px; text-align:center;">
-                            +{{ robot_data.hw_battery|length - 5 }} altri
-                          </div>
-                        {% endif %}
-                      </div>
-                    {% else %}
-                      <div class="empty-cell">—</div>
-                    {% endif %}
-                  </td>
-                </tr>
-              {% endif %}
-            {% endfor %}
-          </tbody>
-        </table>
-      </div>
-    {% else %}
-      <div class="no-data">
-        Nessun dato disponibile
-      </div>
-    {% endif %}
-  </div>
-</body>
-</html>
-<!doctype html>
-<html lang="it">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>{{ title }}</title>
-  <link rel="icon" href="{{ url_for('static', filename='img/CUBO.png') }}">
-  <style>
-    :root{
-      --bg:#0b0f14;
-      --card:#0f1620;
-      --muted:#9fb0c0;
-      --text:#e8eef6;
-      --border:rgba(255,255,255,.08);
-      --accent:#7cc4ff;
-      --accent2:#77e68a;
-      --danger:#ff6b6b;
-      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-    }
-    *{ box-sizing:border-box; }
-    body{
-      margin:0;
-      min-height:100vh;
-      background:
-        radial-gradient(1200px 500px at 20% -10%, rgba(124,196,255,.18), transparent 60%),
-        radial-gradient(900px 500px at 110% 10%, rgba(119,230,138,.12), transparent 55%),
-        var(--bg);
-      color:var(--text);
-    }
-    .wrap{ width:min(1400px, 95vw); margin:0 auto; padding:18px 14px 28px; }
-    .top{
-      display:flex;
-      align-items:center;
-      gap:12px;
-      margin-bottom:14px;
-    }
-    .logo{
-      width:72px;
-      height:72px;
-      object-fit:contain;
-      display:block;
-      filter: drop-shadow(0 18px 28px rgba(0,0,0,.55));
-    }
-    h1{ margin:0; font-size:22px; }
-    .sub{ margin:4px 0 0; color:var(--muted); font-size:13px; }
-    .card{
-      background: linear-gradient(180deg, rgba(255,255,255,.03), transparent 55%), var(--card);
-      border:1px solid var(--border);
-      border-radius:18px;
-      padding:16px;
-      box-shadow: 0 14px 40px rgba(0,0,0,.45);
-    }
-    table{
-      width:100%;
-      border-collapse:collapse;
-      margin-bottom:20px;
-    }
-    th, td{
-      padding:8px 12px;
-      text-align:left;
-      border-bottom:1px solid var(--border);
-    }
-    th{
-      background: rgba(255,255,255,.05);
-      font-weight:800;
-      text-transform:uppercase;
-      font-size:12px;
-      letter-spacing:.5px;
-    }
-    .actions{
-      display:flex;
-      gap:10px;
-      flex-wrap:wrap;
-      margin-top:16px;
-    }
-    .miniBtn{
-      text-decoration:none;
-      color:var(--text);
-      border:1px solid rgba(124,196,255,.28);
-      background: linear-gradient(180deg, rgba(124,196,255,.28), rgba(124,196,255,.10));
-      border-radius:12px;
-      padding:8px 12px;
-      font-size:13px;
-      font-weight:600;
-    }
-  </style>
-</head>
-<body>
-  <div class="wrap">
-    <div class="top">
-      <a href="/MedicairGeek/" aria-label="Torna alla Home">
-        <img class="logo" src="{{ url_for('static', filename='img/LOGO.png') }}" alt="Logo">
-      </a>
-      <div>
-        <h1>{{ title }}</h1>
-        <div class="sub">Report eventi per robot dal settembre 2025</div>
-      </div>
-    </div>
-
-    <div class="card">
-      <table>
-        <thead>
-          <tr>
-            <th>ID Robot</th>
-            <th>Disallineamento Qr</th>
-            <th>Update Firmware</th>
-            <th>Sostituzione Scheda Madre</th>
-            <th>Sostituzione Batteria / Motore Sollevamento</th>
-          </tr>
-        </thead>
-          <tbody>
-            {% for robot_id in robot_ids %}
-              {% if robot_id in robots_data %}
-                {% set robot_data = robots_data[robot_id] %}
-                <tr>
-                  <td class="robot-id">{{ robot_id }}</td>
-
-                  <!-- Disallineamento QR -->
-                  <td>
-                    {% if robot_data.disallineamento_qr %}
-                      <div class="event-cell">
-                        {% for event in robot_data.disallineamento_qr[:5] %}
-                          <div class="event-item">
-                            <div>
-                              <span class="event-type disallineamento_qr">QR</span>
-                              <div class="event-date">{{ event.data }}</div>
-                              <span class="event-title">{{ event.titolo[:40] }}{% if event.titolo|length > 40 %}...{% endif %}</span>
-                            </div>
-                          </div>
-                        {% endfor %}
-                        {% if robot_data.disallineamento_qr|length > 5 %}
-                          <div style="padding:6px; color:var(--muted); font-size:11px; text-align:center;">
-                            +{{ robot_data.disallineamento_qr|length - 5 }} altri
-                          </div>
-                        {% endif %}
-                      </div>
-                    {% else %}
-                      <div class="empty-cell">—</div>
-                    {% endif %}
-                  </td>
-
-                  <!-- Firmware Update -->
-                  <td>
-                    {% if robot_data.firmware_update %}
-                      <div class="event-cell">
-                        {% for event in robot_data.firmware_update[:5] %}
-                          <div class="event-item">
-                            <div>
-                              <span class="event-type firmware_update">FW</span>
-                              <div class="event-date">{{ event.data }}</div>
-                              <span class="event-title">{{ event.update1 or event.update2 }}</span>
-                            </div>
-                          </div>
-                        {% endfor %}
-                        {% if robot_data.firmware_update|length > 5 %}
-                          <div style="padding:6px; color:var(--muted); font-size:11px; text-align:center;">
-                            +{{ robot_data.firmware_update|length - 5 }} altri
-                          </div>
-                        {% endif %}
-                      </div>
-                    {% else %}
-                      <div class="empty-cell">—</div>
-                    {% endif %}
-                  </td>
-
-                  <!-- Scheda Madre -->
-                  <td>
-                    {% if robot_data.hw_mother %}
-                      <div class="event-cell">
-                        {% for event in robot_data.hw_mother[:5] %}
-                          <div class="event-item">
-                            <div>
-                              <span class="event-type hw_mother">MB</span>
-                              <div class="event-date">{{ event.data }}</div>
-                              <span class="event-title">{{ event.titolo[:35] }}{% if event.titolo|length > 35 %}...{% endif %}</span>
-                            </div>
-                          </div>
-                        {% endfor %}
-                        {% if robot_data.hw_mother|length > 5 %}
-                          <div style="padding:6px; color:var(--muted); font-size:11px; text-align:center;">
-                            +{{ robot_data.hw_mother|length - 5 }} altri
-                          </div>
-                        {% endif %}
-                      </div>
-                    {% else %}
-                      <div class="empty-cell">—</div>
-                    {% endif %}
-                  </td>
-
-                  <!-- Batteria / Motore Sollevamento -->
-                  <td>
-                    {% if robot_data.hw_battery %}
-                      <div class="event-cell">
-                        {% for event in robot_data.hw_battery[:5] %}
-                          <div class="event-item">
-                            <div>
-                              <span class="event-type hw_battery">BAT</span>
-                              <div class="event-date">{{ event.data }}</div>
-                              <span class="event-title">{{ event.titolo[:35] }}{% if event.titolo|length > 35 %}...{% endif %}</span>
-                            </div>
-                          </div>
-                        {% endfor %}
-                        {% if robot_data.hw_battery|length > 5 %}
-                          <div style="padding:6px; color:var(--muted); font-size:11px; text-align:center;">
-                            +{{ robot_data.hw_battery|length - 5 }} altri
-                          </div>
-                        {% endif %}
-                      </div>
-                    {% else %}
-                      <div class="empty-cell">—</div>
-                    {% endif %}
-                  </td>
-                </tr>
-              {% endif %}
-            {% endfor %}
-          </tbody>
-      </table>
-
-      <div class="actions">
-        <a class="miniBtn" href="/MedicairGeek/">Torna alla Home</a>
-        <a class="miniBtn" href="/MedicairGeek/storicoReport">Apri Storico Report</a>
-      </div>
-    </div>
   </div>
 </body>
 </html>
