@@ -4,15 +4,15 @@ from pathlib import Path
 
 DESTINATARI = [ #incidenti standard
     "ufficioprogetti@moveoservizi.com",
-    "bp.moveo@gmail.com",
+
+    "elena.pagani@medicair.it",
+    "luca.cozzi@medicair.it",
+    "basilio.pau@moveoservizi.com",
 ]
 
 DESTINATARI_EVENTI_RILIEVO = [ #no incidenti standard
-   "michele.cecchi@moveoservizi.com",
-    "basilio.pau@moveoservizi.com",
+    "michele.cecchi@moveoservizi.com",
     "direzione@moveoservizi.com",
-    "elena.pagani@medicair.it",
-    "luca.cozzi@medicair.it",
 ]
 
 # alias opzionale
