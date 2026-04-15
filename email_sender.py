@@ -22,12 +22,13 @@ TEMPLATES_JSON_PATH = BASE_DIR / "templates" / "email_templates.json"
 # =========================
 # CONFIG (modifica qui)
 # =========================
-SMTP_SERVER = "smtp.gmail.com"
-SMTP_PORT = 587
-SENDER_EMAIL = "Server.moveo@gmail.com"
-SENDER_PASSWORD = "bpxl dyil qdid ylyj"  # App Password (se a te funziona così, ok)
-USE_TLS = True
 
+SMTP_SERVER = "smtp-mail.outlook.com"
+SMTP_PORT = 587
+SENDER_EMAIL = "noreply@moveoservizi.com"
+SENDER_NAME = "NoReply Moveo Servizi"
+SENDER_PASSWORD = "Viaspinelli90!"
+USE_TLS = True
 
 # =========================
 # TEMPLATE REGISTRY (DEFAULT)
