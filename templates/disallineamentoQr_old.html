@@ -14,18 +14,12 @@
       --text: #e8eef6;
       --border: rgba(255,255,255,.10);
       --accent: #7cc4ff;
-      --row-odd: #101722;
-      --row-even: #141c28;
-      --sticky-head: #111a27;
-      --sticky-border: rgba(255,255,255,.12);
-
+      
       --color-qr: #e74c3c;
       --color-fw: #3498db;
       --color-mcu: #f39c12;
       --color-bat: #2ecc71;
-      --color-man: #7cc4ff;
-      --color-manstra: #f08a5d;
-
+      
       font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
     }
 
@@ -41,7 +35,7 @@
     }
 
     .wrap {
-      width: min(1480px, 96vw);
+      width: min(1400px, 94vw);
       margin: 0 auto;
       padding: 16px 14px 26px;
     }
@@ -50,7 +44,7 @@
       display: flex;
       align-items: center;
       gap: 12px;
-      margin-bottom: 20px;
+      margin-bottom: 24px;
     }
 
     .logo {
@@ -79,23 +73,16 @@
     }
 
     .section {
-      margin-bottom: 26px;
+      margin-bottom: 32px;
     }
 
     .section-title {
       font-size: 16px;
       font-weight: 900;
-      margin-bottom: 10px;
+      margin-bottom: 12px;
       color: var(--accent);
       text-transform: uppercase;
       letter-spacing: .5px;
-    }
-
-    .section-hint {
-      margin: 0 0 12px;
-      color: var(--muted);
-      font-size: 13px;
-      line-height: 1.4;
     }
 
     .legend {
@@ -130,10 +117,8 @@
 
     table {
       width: 100%;
-      border-collapse: separate;
-      border-spacing: 0;
+      border-collapse: collapse;
       font-size: 13px;
-      min-width: 1120px;
     }
 
     thead {
@@ -150,90 +135,61 @@
       color: var(--accent);
       font-size: 12px;
       word-break: break-word;
-      max-width: 78px;
-      background: rgba(255,255,255,.03);
+      max-width: 80px;
     }
 
     th:first-child {
       text-align: left;
-      min-width: 190px;
-      max-width: 190px;
+      min-width: 120px;
+      max-width: none;
       position: sticky;
       left: 0;
-      z-index: 7;
-      background: linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.01)), var(--sticky-head);
-      border-right: 1px solid var(--sticky-border);
-      box-shadow: 14px 0 24px rgba(0,0,0,.28);
+      z-index: 3;
+      background: #000000;
     }
 
     td {
       padding: 8px;
       border-bottom: 1px solid rgba(255,255,255,.03);
       text-align: center;
-      height: 54px;
-      background: transparent;
-    }
-
-    tbody tr:nth-child(odd) td {
-      background: rgba(255,255,255,.01);
-    }
-
-    tbody tr:nth-child(even) td {
-      background: rgba(255,255,255,.03);
-    }
-
-    tbody tr:hover td {
-      background: rgba(255,255,255,.06);
-    }
-
-    tbody tr:nth-child(odd) td:first-child {
-      background: var(--row-odd);
-    }
-
-    tbody tr:nth-child(even) td:first-child {
-      background: var(--row-even);
-    }
-
-    tbody tr:hover td:first-child {
-      background: #182232;
+      height: 45px;
     }
 
     td:first-child {
       text-align: left;
+      font-weight: 900;
       color: var(--accent);
-      min-width: 190px;
-      max-width: 190px;
+      min-width: 120px;
       position: sticky;
       left: 0;
-      z-index: 6;
-      border-right: 1px solid var(--sticky-border);
-      box-shadow: 14px 0 24px rgba(0,0,0,.28);
+      background: #000000;
+      z-index: 2;
+      box-shadow: 8px 0 16px rgba(0,0,0,.18);
+    }
+
+    tbody tr:nth-child(odd) {
+      background: rgba(255,255,255,.01);
+    }
+
+    tbody tr:nth-child(even) {
+      background: rgba(255,255,255,.03);
+    }
+
+    tbody tr:hover {
+      background: rgba(255,255,255,.06);
     }
 
     .robot-first-col {
       display: flex;
       flex-direction: column;
-      gap: 6px;
-      align-items: flex-start;
-    }
-
-    .robot-link {
-      color: var(--accent);
-      font-weight: 900;
-      font-size: 15px;
-      text-decoration: none;
-      line-height: 1.2;
-    }
-
-    .robot-link:hover {
-      text-decoration: underline;
+      gap: 4px;
     }
 
     .summary-badges {
       display: flex;
       flex-wrap: wrap;
       gap: 4px;
-      margin-top: 2px;
+      margin-top: 4px;
     }
 
     .summary-badge {
@@ -249,12 +205,9 @@
       white-space: nowrap;
     }
 
-    .summary-badge.qr { background: var(--color-qr); }
     .summary-badge.fw { background: var(--color-fw); }
     .summary-badge.mcu { background: var(--color-mcu); }
     .summary-badge.bat { background: var(--color-bat); }
-    .summary-badge.man { background: var(--color-man); }
-    .summary-badge.manstra { background: var(--color-manstra); }
 
     .event-cell {
       display: flex;
@@ -267,9 +220,9 @@
     }
 
     .event-dot {
-      min-width: 38px;
-      height: 24px;
-      padding: 0 8px;
+      min-width: 32px;
+      height: 22px;
+      padding: 0 6px;
       border-radius: 999px;
       display: inline-flex;
       align-items: center;
@@ -277,44 +230,49 @@
       font-size: 10px;
       font-weight: 900;
       cursor: pointer;
-      transition: transform 0.16s ease, box-shadow 0.16s ease;
+      transition: transform 0.2s ease;
       position: relative;
       z-index: 1;
       color: white;
-      box-shadow: inset 0 0 0 1px rgba(255,255,255,.08);
-      user-select: none;
     }
 
     .event-dot:hover {
-      transform: scale(1.08);
-      box-shadow: 0 8px 18px rgba(0,0,0,.28), inset 0 0 0 1px rgba(255,255,255,.08);
+      transform: scale(1.2);
     }
 
-    .event-dot[data-type="qr"] { background-color: var(--color-qr); }
-    .event-dot[data-type="fw"] { background-color: var(--color-fw); }
-    .event-dot[data-type="mcu"] { background-color: var(--color-mcu); }
-    .event-dot[data-type="bat"] { background-color: var(--color-bat); }
-    .event-dot[data-type="man"] { background-color: var(--color-man); }
-    .event-dot[data-type="manstra"] { background-color: var(--color-manstra); }
+    .event-dot[data-type="qr"] {
+      background-color: var(--color-qr);
+    }
+
+    .event-dot[data-type="fw"] {
+      background-color: var(--color-fw);
+    }
+
+    .event-dot[data-type="mcu"] {
+      background-color: var(--color-mcu);
+    }
+
+    .event-dot[data-type="bat"] {
+      background-color: var(--color-bat);
+    }
 
     .event-tooltip {
       display: none;
       position: absolute;
-      bottom: calc(100% + 6px);
+      bottom: 100%;
       left: 50%;
       transform: translateX(-50%);
-      background: rgba(0, 0, 0, 0.92);
+      background: rgba(0, 0, 0, 0.9);
       color: white;
-      padding: 8px 10px;
-      border-radius: 8px;
+      padding: 6px 8px;
+      border-radius: 4px;
       font-size: 11px;
-      line-height: 1.35;
-      white-space: normal;
+      white-space: nowrap;
       z-index: 100;
-      width: 220px;
-      text-align: left;
-      box-shadow: 0 10px 24px rgba(0,0,0,.30);
-      pointer-events: none;
+      margin-bottom: 4px;
+      max-width: 200px;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
 
     .event-dot:hover .event-tooltip {
@@ -356,33 +314,25 @@
 
       table {
         font-size: 12px;
-        min-width: 980px;
       }
 
       th, td {
         padding: 6px 4px;
       }
 
-      th:first-child,
-      td:first-child {
-        min-width: 138px;
-        max-width: 138px;
+      th:first-child {
+        min-width: 80px;
       }
 
       th {
-        max-width: 58px;
+        max-width: 60px;
       }
 
       .event-dot {
-        min-width: 30px;
-        height: 20px;
+        width: 24px;
+        height: 18px;
         font-size: 8px;
-        padding: 0 5px;
-      }
-
-      .event-tooltip {
-        width: 180px;
-        font-size: 10px;
+        padding: 0 4px;
       }
     }
   </style>
@@ -395,12 +345,13 @@
       <img class="logo" src="{{ url_for('static', filename='img/CUBO.png') }}" alt="Logo">
       <div class="header-text">
         <h1>{{ title }}</h1>
-        <p class="sub">Timeline eventi per robot, dal giorno zero a oggi.</p>
+        <p class="sub">Timeline degli eventi per robot • QR, Firmware, MCU, Batteria</p>
       </div>
     </div>
 
+    <!-- Legenda -->
     <div class="section">
-      <div class="section-title">Legenda</div>
+      <div class="section-title">📋 Legenda</div>
       <div class="legend">
         <div class="legend-item">
           <div class="legend-color" style="background-color: var(--color-qr);"></div>
@@ -408,56 +359,49 @@
         </div>
         <div class="legend-item">
           <div class="legend-color" style="background-color: var(--color-fw);"></div>
-          <span><strong>FW</strong> - Update firmware</span>
+          <span><strong>FW</strong> - Update Firmware</span>
         </div>
         <div class="legend-item">
           <div class="legend-color" style="background-color: var(--color-mcu);"></div>
-          <span><strong>MCU</strong> - Cambio scheda madre / MCU</span>
+          <span><strong>MCU</strong> - Cambio Scheda Madre</span>
         </div>
         <div class="legend-item">
           <div class="legend-color" style="background-color: var(--color-bat);"></div>
-          <span><strong>BAT</strong> - Cambio batteria</span>
-        </div>
-        <div class="legend-item">
-          <div class="legend-color" style="background-color: var(--color-man);"></div>
-          <span><strong>MAN</strong> - Manutenzione ordinaria</span>
-        </div>
-        <div class="legend-item">
-          <div class="legend-color" style="background-color: var(--color-manstra);"></div>
-          <span><strong>STR</strong> - Manutenzione straordinaria</span>
+          <span><strong>BAT</strong> - Cambio Batteria</span>
         </div>
       </div>
     </div>
 
     {% if robots_list %}
+      <!-- Tabella principale -->
       <div class="section">
-        <div class="section-title">Timeline eventi</div>
-        <p class="section-hint">La sequenza è ordinata cronologicamente dal primo evento disponibile. Clic sul nome robot per aprire la scheda robot. Doppio click su una chip evento per aprire direttamente il report collegato.</p>
+        <div class="section-title">📅 Timeline Eventi</div>
         <div class="table-container">
           <table>
             <thead>
               <tr>
                 <th>ID Robot</th>
                 {% for date in unique_dates %}
-                  <th title="{{ date.key }}">{{ date.label }}</th>
+                  <th title="{{ date }}">{{ date }}</th>
                 {% endfor %}
               </tr>
             </thead>
             <tbody>
               {% for robot_id in robots_list %}
                 <tr>
-                  <td>
-                    <div class="robot-first-col">
-                      <a class="robot-link" href="/MedicairGeek/infoImpianto/robot/{{ robot_id }}">{{ robot_id }}</a>
-                      <div class="summary-badges">
-                        {% set summary = robot_summary.get(robot_id, {}) %}
-                        {% if summary.qr %}<span class="summary-badge qr">QR{{ summary.qr }}</span>{% endif %}
-                        {% if summary.fw %}<span class="summary-badge fw">FW{{ summary.fw }}</span>{% endif %}
-                        {% if summary.mcu %}<span class="summary-badge mcu">MCU{{ summary.mcu }}</span>{% endif %}
-                        {% if summary.bat %}<span class="summary-badge bat">BAT{{ summary.bat }}</span>{% endif %}
-                        {% if summary.man %}<span class="summary-badge man">MAN{{ summary.man }}</span>{% endif %}
-                        {% if summary.manstra %}<span class="summary-badge manstra">STR{{ summary.manstra }}</span>{% endif %}
-                      </div>
+                  <td class="robot-first-col">
+                    <div>{{ robot_id }}</div>
+                    <div class="summary-badges">
+                      {% set summary = robot_summary.get(robot_id, {}) %}
+                      {% if summary.fw %}
+                        <span class="summary-badge fw">FW{{ summary.fw }}</span>
+                      {% endif %}
+                      {% if summary.mcu %}
+                        <span class="summary-badge mcu">MCU{{ summary.mcu }}</span>
+                      {% endif %}
+                      {% if summary.bat %}
+                        <span class="summary-badge bat">BAT{{ summary.bat }}</span>
+                      {% endif %}
                     </div>
                   </td>
                   {% for date in unique_dates %}
@@ -465,7 +409,7 @@
                       {% set events_on_date = [] %}
                       {% if robot_id in robot_data %}
                         {% for event in robot_data[robot_id] %}
-                          {% if event.date_str == date.key %}
+                          {% if event.date_str == date %}
                             {% set _ = events_on_date.append(event) %}
                           {% endif %}
                         {% endfor %}
@@ -474,17 +418,9 @@
                       {% if events_on_date %}
                         <div class="event-cell">
                           {% for event in events_on_date %}
-                            <div
-                              class="event-dot"
-                              data-type="{{ event.event_type }}"
-                              data-report-url="{{ event.report_url }}"
-                              title="Doppio click per aprire il report"
-                            >
+                            <div class="event-dot" data-type="{{ event.event_type }}">
                               {{ event.label }}
-                              <div class="event-tooltip">
-                                <strong>{{ event.label }}</strong><br>
-                                {{ event.titolo }}{% if event.categoria %}<br><span style="color:#bcd0e2;">{{ event.categoria }}</span>{% endif %}
-                              </div>
+                              <div class="event-tooltip">{{ event.titolo }}</div>
                             </div>
                           {% endfor %}
                         </div>
@@ -509,18 +445,5 @@
       </div>
     {% endif %}
   </div>
-
-  <script>
-    (() => {
-      document.querySelectorAll('.event-dot[data-report-url]').forEach((chip) => {
-        chip.addEventListener('dblclick', () => {
-          const url = chip.dataset.reportUrl || '';
-          if (url) {
-            window.location.href = url;
-          }
-        });
-      });
-    })();
-  </script>
 </body>
 </html>

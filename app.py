@@ -21,7 +21,7 @@ from log_utils import log_activity
 from report_incidente import report_incidente_bp
 from consulta_report import consulta_report_bp
 from info_impianto import ensure_info_impianto_cache, info_impianto_bp
-from disallineamento_qr import disallineamento_qr_bp
+from disallineamento_qr_old import disallineamento_qr_bp
 
 
 BASE_DIR = Path(__file__).resolve().parent
