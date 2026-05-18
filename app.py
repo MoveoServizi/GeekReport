@@ -8,7 +8,7 @@ Nuova nomenclatura pagine:
 - /MedicairGeek/storicoReport  -> Storico Report (Blueprint: consulta_report_bp)
 - /MedicairGeek/disallineamentoQr -> Disallineamento QR (Blueprint: disallineamento_qr_bp)
 """
-
+#prova login rapido: http://localhost:3570/MedicairGeek/quick-login?token=T3BlcmF
 from __future__ import annotations
 
 import base64
